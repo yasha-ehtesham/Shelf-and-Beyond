@@ -1,1 +1,36 @@
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environment
+env/
+venv/
+ENV/
+*.env
+*.venv
+
+# VSCode, PyCharm etc.
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
 .env
+
+# Database
+*.sqlite3
+
+# Media
+/media/
+>>>>>>> c4d0028 (Restore and update .gitignore)
