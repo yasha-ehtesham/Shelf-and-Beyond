@@ -14,6 +14,17 @@ from django.contrib.messages import get_messages
 import requests
 from django.core.paginator import Paginator
 
+from django.conf import settings
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Load variables from .env
+
+GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
+NYT_API_KEY = os.getenv('NYT_API_KEY')
+
+
 # Create your views here.
 #-----------------------------------------------------------------------------
 #yasha module 2 views 
@@ -32,13 +43,15 @@ def show_listings(request):
     }
     return render(request, "show_listings.html", context)
 
+
+
 def details_listing(request):
     listing_id = request.GET.get('listing_id')
     #fetch the listing from the database after collecting it from the URL parameter
     listing = Listing.objects.get(listing_id=listing_id)
 
     # Fetch book summary from Google Books API
-    api_key = 'AIzaSyCiWDEjO-w2-eg5ZbXi8-amHg8wLfS1Z-w'
+    api_key = GOOGLE_BOOKS_API_KEY
     
     title = listing.title
     author = listing.author  # Make sure your Listing model has an author field!
@@ -85,7 +98,7 @@ def show_one_review(request):
 
 
 
-NYT_API_KEY = 'uHzEzoDsa0TODeO5SMKKiX5PxnBbVKAI' #secure it before upload to github
+
 #User -> Form -> Django View -> NYT API -> JSON -> Django View -> Template -> User sees Results
 
 def search_reviews(request):
