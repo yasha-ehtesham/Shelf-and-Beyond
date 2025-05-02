@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelf and Beyond</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">Shelf and Beyond</div>
+            <div class="search-container">
+                <input type="text" placeholder="Search by book name or author name">
+                <button class="search-btn">🔍</button>
+                <!-- <button class="search-btn">&#128269</button> -->
+
+                <button class="cart-btn">🛒</button>
+            </div>
+            <div class="auth-buttons">
+                <a href="{% url 'login_step' %}"><button class="login">LOG IN</button></a>
+                <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="#">Home</a>
+            <div class="dropdown">
+                <a href="#" class="category-link">Category ▾</a>
+                <!-- <a href="#">Category ▾</a> -->
+            </div>
+            <a href="#">Genre</a>
+            <a href="#">Authors</a>
+            <a href="#">Bestsellers</a>
+            <a href="{% url 'show_listings' %}">All Listings</a>
+           
+
+        </nav>
+    </header>
+
+    <main>
+        <div class="book-background">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

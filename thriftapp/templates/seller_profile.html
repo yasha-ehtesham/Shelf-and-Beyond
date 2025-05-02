@@ -1,0 +1,49 @@
+{% extends "base2.html" %}
+
+{% block content %}
+
+ <div class="centered-content">
+     
+     
+    
+     <div class="listings-container">
+         
+         <div class="listing-details">
+             <h1>{{ listing.title }}</h1>    
+             <p><strong>Seller's name:</strong> {{ seller.firstname }} {{ seller.lastname }} </p>
+             <div class="profile-info">
+                <div class="info-item">
+                    <strong>Email:</strong> {{ seller.email }}
+                </div>
+                <div class="info-item">
+                    <div class="info-item">
+                        <strong>Gender:</strong> {{ seller.get_gender_display }}
+                    </div>
+                    <strong>Phone:</strong> {{ seller.phone }}
+                </div>
+                <div class="info-item">
+                    <strong>Birthday:</strong> {{ seller.birthdate }}
+                </div>
+                <div class="info-item">
+                    <strong>Bio:</strong> {{ seller.bio }}
+                </div>
+
+                <div class="info-item">
+                    <strong>Rating:</strong>
+                    {% if seller.rating %}
+                        {{ seller.rating }}
+                    {% else %}
+                        No ratings yet.
+                    {% endif %}
+                </div>
+                
+            </div>
+
+ 
+ 
+ 
+ 
+         </div> 
+     </div>
+ </div>
+ {% endblock %}

@@ -1,0 +1,10 @@
+{% extends "basereg.html" %}
+
+{% block content %}
+<h2>Signup - Step 2</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }} <!--Wraps each field in <p> tags-->
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

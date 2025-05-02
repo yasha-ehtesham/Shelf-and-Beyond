@@ -1,0 +1,28 @@
+{% extends "basereg.html" %}
+
+{% block content %}
+    <h2>Create Admin User</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            <label for="username">Username:</label><br>
+            {{ form.username }}
+        </p>
+        <p>
+            <label for="password1">Password:</label><br>
+            {{ form.password1 }}
+        </p>
+        <p>
+            <label for="password2">Confirm Password:</label><br>
+            {{ form.password2 }}
+        </p>
+        <button type="submit">Create Admin</button>
+    </form>
+{% endblock %}

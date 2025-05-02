@@ -1,0 +1,38 @@
+{% extends "base2.html" %}
+
+{% block content %}
+<div class="centered-content">
+
+    <div class="listings-container">
+        <div class="text-box"> <!-- NEW: wrap the text in a proper box -->
+
+            <div class="text-container">
+
+                <h1 style="margin-bottom: 20px;">Reviews for "{{ title }}"</h1>
+
+                {% if reviews %}
+                    {% for review in reviews %}
+                        <div class="review">
+                            <h2 class="book-title">{{ review.book_title }}</h2>
+                            <p><strong>Author:</strong> {{ review.book_author }}</p>
+                            
+
+                            
+                            <p><strong>Review by:</strong> {{ review.byline }}</p>
+
+                            <a href="{{ review.url }}" target="_blank" class="review-link">Read Full Review</a>
+                        </div>
+                        <hr style="margin: 20px 0;">
+                    {% endfor %}
+                {% else %}
+                    <div class="review"> <!-- wrapping no review in the same class -->
+                        <p>No reviews found for this book.</p>
+                    </div>
+                {% endif %}
+
+            </div> 
+        </div>
+    </div>
+
+</div>
+{% endblock %}

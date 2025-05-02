@@ -1,0 +1,21 @@
+<!-- user dashboard -->
+
+{% extends "base2.html" %}
+
+{% block content %}
+<div class="centered-content">
+    <h1>Welcome, {{ user.firstname }} {{ user.lastname }}</h1>
+
+    {% if request.session.user_id %} 
+        <br>
+        <div class="list-buttons">
+            <form action="{% url 'create_listing' %}" method="get">
+                <button type="submit" class="create_listing">CREATE LISTING</button>
+            </form>
+            <!-- a get request is submitted to go to this page -->
+
+        </div>
+        <br>
+    {% endif %}
+</div>
+{% endblock %}

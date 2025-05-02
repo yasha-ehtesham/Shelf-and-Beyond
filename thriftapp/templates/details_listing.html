@@ -1,0 +1,56 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block content %}
+<div class="listings-container">
+
+    <!-- Left side: Image -->
+    <div class="image-container">
+        <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+    </div>
+
+    <!-- Right side: Text inside a nice box -->
+    <div class="text-box"> <!-- updated wrapper class -->
+        
+        <div class="text-container"> <!-- box content -->
+            <h2>Title: {{ listing.title }}</h2>
+            <p><strong>Author:</strong> {{ listing.author }}</p>
+            <p><strong>Price:</strong> {{ listing.price }} BDT</p>
+            
+            <p><strong>Condition:</strong> {{ listing.get_condition_display }}</p>
+            <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
+            <br>
+            {% if summary %}
+                <p><strong>Overview:</strong> {{ summary }} [Collected from Google Books]</p>
+            {% else %}
+                <p><strong>Overview:</strong> No summary available.</p>
+            {% endif %}
+            <br>
+
+            <p><strong>Seller's name:</strong> {{ listing.seller.firstname }} {{ listing.seller.lastname }}</p>
+
+            <br><br>
+
+            <div class="auth-buttons">
+                <form action="{% url 'search_reviews' %}" method="get">
+                    <input type="hidden" name="query" value="{{ listing.title }}">
+                    <button type="submit" class="button">Read Reviews</button>
+                </form>
+                <br>
+
+                <a href="{% url 'seller_profile' listing.seller.web_user_id %}">
+                    <button type="button" class="seller_profile">Visit Seller's Profile</button>
+                </a>
+            
+                <br>
+
+                <form action="{% url 'send_message' %}" method="get">
+                    <button type="submit" class="button">Send Message</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
