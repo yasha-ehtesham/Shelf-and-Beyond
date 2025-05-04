@@ -44,7 +44,7 @@
             
                 <br>
 
-                <form action="{% url 'send_message' %}" method="get">
+                <form action="{% url 'send_message' listing.seller.web_user_id %}" method="get">
                     <button type="submit" class="button">Send Message</button>
                 </form>
                 <br>

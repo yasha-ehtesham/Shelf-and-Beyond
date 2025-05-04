@@ -17,7 +17,6 @@ urlpatterns = [
     #api-yasha
     path('show_listings/', views.show_listings, name="show_listings"),
     path('details_listing/', views.details_listing, name="details_listing"),
-    path('send_message/', views.send_message, name='send_message'), #empty for now
     path('show_one_review/', views.show_one_review , name='show_one_review'),
     path('search_reviews', views.search_reviews , name='search_reviews'),
 
@@ -33,9 +32,8 @@ urlpatterns = [
 
     #zoie's urls
     path('seller_profile/<int:seller_id>/', views.seller_public_profile, name='seller_profile'),
-   
-
-
     path('listing/create/', views.create_listing, name='create_listing'),
     path('manage_listings/', views.manage_listings, name='manage_listings'),
+    path('message/send/<int:seller_id>/', views.send_message, name='send_message'),
+    path('message/show/', views.show_message, name='show_message'),
 ]

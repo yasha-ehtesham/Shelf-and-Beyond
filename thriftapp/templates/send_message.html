@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Send Message to Seller</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<div class="centered-content">
+    <h1>Send Message to {{ seller.firstname }} {{ seller.lastname }}</h1>
+
+    <form method="POST" action="{% url 'send_message' seller.web_user_id %}">
+        {% csrf_token %}
+        {{ form.receiver.as_hidden }}
+        <div>
+            {{ form.sender_name.label_tag }}
+            {{ form.sender_name }}
+            {% if form.sender_name.errors %}
+                <div class="error">{{ form.sender_name.errors }}</div>
+            {% endif %}
+        </div>
+        <br>
+        <div>
+            {{ form.message.label_tag }}
+            {{ form.message }}
+            {% if form.message.errors %}
+                <div class="error">{{ form.message.errors }}</div>
+            {% endif %}
+        </div>
+        <br>
+        <button type="submit" class="back-btn">Send Message</button>
+    </form>
+</div>
+</body>
+</html>

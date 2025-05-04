@@ -45,7 +45,7 @@ class WebUser(models.Model):
     gender = models.CharField(max_length=20, choices= GENDER)
 
     password = models.CharField(max_length=10)
-    birthdate = models.DateField() #YYYY-MM-DD
+    birthdate = models.DateField() #MM-DD-YYYY
     bio = models.TextField(blank=True, null=True)
 
     #foreign key
@@ -121,3 +121,13 @@ class Purchase(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='CONFIRMED')
     purchase_group = models.ForeignKey(PurchaseGroup, null=True, blank=True, on_delete=models.CASCADE)
 
+
+class Inbox(models.Model):
+    sender = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='received_messages')
+    sender_name = models.CharField(max_length=20)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender} to {self.receiver}"

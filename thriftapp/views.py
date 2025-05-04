@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import SignupForm1, SignupForm2
-from .forms import ListingForm, ReviewForm
-from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup
+from .forms import ListingForm, ReviewForm, InboxForm
+from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup, Inbox
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-
+from django.db.models import Q, Sum
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.messages import get_messages
 
@@ -237,17 +237,8 @@ def details_listing(request):
 
     return render(request, 'details_listing.html', {'listing': listing, 'summary': summary})
 
-
-
-def send_message(request):
-    return render(request, 'send_message.html')
-
-
 def show_one_review(request):
     return render(request, 'show_one_review.html')
-
-
-
 
 #User -> Form -> Django View -> NYT API -> JSON -> Django View -> Template -> User sees Results
 
@@ -339,16 +330,6 @@ def admin_dashboard(request):
 
 def home(request):
     return render(request, "homepage.html", {})
-
-def welcome_page(request): #login view
-    if 'user_id' not in request.session:
-        return redirect('login_step')
-
-    user = WebUser.objects.get(pk=request.session['user_id'])
-
-    # request.session['web_user_id'] = user.web_user_id
-    return render(request, "home.html", {'user': user})
-
 
 def login_step(request):
     storage = get_messages(request)
@@ -498,4 +479,72 @@ def manage_listings(request):
     # Render the page with the listings context
     return render(request, 'manage_listings.html', {'listings': listings})
 
+
 #------------------------------------------------------------------------------------------
+
+def send_message(request, seller_id):
+    seller = WebUser.objects.get(web_user_id=seller_id)
+    buyer = WebUser.objects.get(pk=request.session['user_id'])
+    
+    if request.method == 'POST':
+        form = InboxForm(request.POST)
+        print(form.is_valid())
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = buyer
+            message.receiver = seller
+            message.save()
+            return redirect('welcome_page')
+    else:
+        form = InboxForm(initial={'receiver': seller})
+
+    return render(request, 'send_message.html', {'form': form, 'seller': seller})
+
+
+def show_message(request):
+    user = WebUser.objects.get(pk=request.session['user_id'])
+    
+    messages = Inbox.objects.filter(
+        Q(sender=user) | Q(receiver=user)
+    ).order_by('-timestamp')
+    
+    return render(request, 'show_message.html', {'messages': messages})
+
+def welcome_page(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+
+    user = WebUser.objects.get(pk=request.session['user_id'])
+
+    # Metrics
+    total_books_listed = Listing.objects.filter(seller=user).count()
+    books_sold = Purchase.objects.filter(seller=user, status='DELIVERED').count()
+    books_purchased = Purchase.objects.filter(buyer=user).count()
+    earnings = Purchase.objects.filter(seller=user, status='DELIVERED').aggregate(
+        total_earnings=Sum('listing__price')
+    )['total_earnings'] or 0
+
+    # Transactions
+    pending_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='CONFIRMED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    active_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='SHIPPED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    completed_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='DELIVERED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+
+    context = {
+        'user': user,
+        'total_books_listed': total_books_listed,
+        'books_sold': books_sold,
+        'books_purchased': books_purchased,
+        'earnings': earnings,
+        'pending_transactions': pending_transactions,
+        'active_transactions': active_transactions,
+        'completed_transactions': completed_transactions,
+    }
+
+    # request.session['web_user_id'] = user.web_user_id
+    return render(request, "home.html", context)

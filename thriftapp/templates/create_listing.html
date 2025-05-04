@@ -59,7 +59,7 @@
     <div class="side-navigation">
         <a href="/browseall" class="btn btn-dark">Browse All</a>
         <a href="/notifications" class="btn btn-dark">Notifications</a>
-        <a href="/inbox" class="btn btn-dark">Inbox</a>
+        <a href="/message/show/" class="btn btn-dark">Inbox</a>
         <a href="/buying" class="btn btn-dark">Buying</a>
         <a href="/selling" class="btn btn-dark">Selling</a>
         <a href="/listing/create" class="btn btn-dark">Create Listing</a>
@@ -72,9 +72,6 @@
             <h4>📚 Book for sale</h4>
             <form method="POST" enctype="multipart/form-data" id="listingForm" action="{% url 'create_listing' %}">
                 {% csrf_token %}
-
-                
-
                 <div class="mb-3">
                     <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image</label>
                     {{ form.image }}
@@ -119,22 +116,11 @@
                         <span>No image uploaded yet.</span>
                     </div>
                     <h5 id="preview-title"></h5>
+                    <p id="preview-author"></p>
                     <p id="preview-description"></p>
                     <strong id="preview-price"></strong><br>
                     <em id="preview-condition"></em>
                 </div>
-            </div>
-        </div>
-
-        <!-- Sidebar (Seller Info Preview) -->
-        <div class="sidebar-content">
-            <div class="p-3 preview-box">
-                <h6>📖 Preview Panel</h6>
-                <p><strong>Title:</strong> <span id="sidebar-title"></span></p>
-                <p><strong>Price:</strong> <span id="sidebar-price"></span></p>
-                <p><strong>Condition:</strong> <span id="sidebar-condition"></span></p>
-                <p><strong>Description:</strong></p>
-                <p id="sidebar-description"></p>
             </div>
         </div>
     </div>
@@ -143,22 +129,21 @@
         // Live preview logic
         const titleField = document.getElementById('id_title');
         const priceField = document.getElementById('id_price');
+        const authorField = document.getElementById('id_author');
         const conditionField = document.getElementById('id_condition');
         const descriptionField = document.getElementById('id_description');
         const imgPreview = document.getElementById('img-preview');
     
         function updatePreview() {
             document.getElementById('preview-title').textContent = titleField.value;
-            document.getElementById('sidebar-title').textContent = titleField.value;
     
             document.getElementById('preview-description').textContent = descriptionField.value;
-            document.getElementById('sidebar-description').textContent = descriptionField.value;
+
+            document.getElementById('preview-author').textContent = authorField.value;
     
-            document.getElementById('preview-price').textContent = '₦' + priceField.value;
-            document.getElementById('sidebar-price').textContent = '₦' + priceField.value;
+            document.getElementById('preview-price').textContent = priceField.value + ' BDT';
     
             document.getElementById('preview-condition').textContent = conditionField.options[conditionField.selectedIndex].text;
-            document.getElementById('sidebar-condition').textContent = conditionField.options[conditionField.selectedIndex].text;
         }
     
         function previewImage() {
@@ -179,6 +164,7 @@
         // Event listeners
         titleField.addEventListener('input', updatePreview);
         priceField.addEventListener('input', updatePreview);
+        authorField.addEventListener('input', updatePreview);
         conditionField.addEventListener('change', updatePreview);
         descriptionField.addEventListener('input', updatePreview);
         document.getElementById('id_image').addEventListener('change', previewImage); // <-- This line fixes it
