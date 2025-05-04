@@ -14,9 +14,9 @@
     <button type="submit">Login</button>
 </form>
 
-{% if messages %}
-  {% for msg in messages %}
-    <p style="color:red">{{ msg }}</p>
-  {% endfor %}
-{% endif %}
+
+{% for msg in messages %}
+  <p style="color:red">{{ msg }}</p>
+{% endfor %}
+
 {% endblock %}

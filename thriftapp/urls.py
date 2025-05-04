@@ -17,13 +17,19 @@ urlpatterns = [
     #api-yasha
     path('show_listings/', views.show_listings, name="show_listings"),
     path('details_listing/', views.details_listing, name="details_listing"),
-
-
     path('send_message/', views.send_message, name='send_message'), #empty for now
-    
-
     path('show_one_review/', views.show_one_review , name='show_one_review'),
     path('search_reviews', views.search_reviews , name='search_reviews'),
+
+    path('add_to_cart/', views.add_to_cart, name = 'add_to_cart'),
+    path('view_cart/', views.view_cart, name = 'view_cart'),
+    path('remove_from_cart/', views.remove_from_cart, name='remove_from_cart'),
+    
+    # path('confirm_purchase/<int:listing_id>/', views.confirm_purchase, name='confirm_purchase'),
+    path('total_bill/', views.view_total_bill, name='view_total_bill'),
+    
+    path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
+    path('purchase_history/', views.view_purchase_history, name='view_purchase_history'),
 
     #zoie's urls
     path('seller_profile/<int:seller_id>/', views.seller_public_profile, name='seller_profile'),

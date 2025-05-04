@@ -1,0 +1,40 @@
+{% extends "base2.html" %}
+
+{% block content %}
+<h2>Your Shopping Cart</h2>
+
+{% if listings %}
+    <ul>
+        {% for listing in listings %}
+            <li>
+                <p><strong>Item:</strong> {{ listing.title }} (ID: {{ listing.listing_id }})</p>
+                <p><strong>Price:</strong> {{ listing.price }} BDT</p>
+                <br>
+                <!-- Remove from cart form -->
+                <form action="{% url 'remove_from_cart' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="listing_id" value="{{ listing.listing_id }}">
+                    <button type="submit">Remove from Cart</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Buttons for total bill and confirm -->
+    <form action="{% url 'confirm_all_purchases' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Confirm All Purchases</button>
+    </form>
+
+    <br>
+
+    
+
+{% else %}
+    <p>Your cart is empty.</p>
+{% endif %}
+
+
+<br>
+<a href="{% url 'view_purchase_history' %}">View Purchase History</a>
+{% endblock %}

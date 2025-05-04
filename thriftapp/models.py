@@ -78,7 +78,7 @@ class Listing(models.Model):
     listing_time = models.DateTimeField(auto_now_add=True)
 
     # Seller FK
-    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)   
 
     def __str__(self):
         return f"{self.title} - {self.status}"
@@ -94,3 +94,30 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review by {self.reviewer} - {self.rating}/5"
+    
+
+#new model created by yasha to track purachase history 
+
+
+class PurchaseGroup(models.Model):
+    buyer = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def total_price(self):
+        return sum(p.listing.price for p in self.purchase_set.all())
+
+class Purchase(models.Model):
+    purchase_id = models.AutoField(primary_key=True)
+    buyer = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='purchases') #buyer id
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='sales') #seller id
+    purchase_date = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        ('CONFIRMED', 'Confirmed'),
+        ('SHIPPED', 'Shipped'),
+        ('DELIVERED', 'Delivered'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='CONFIRMED')
+    purchase_group = models.ForeignKey(PurchaseGroup, null=True, blank=True, on_delete=models.CASCADE)
+

@@ -1,0 +1,7 @@
+{% extends "base2.html" %}
+
+{% block content %}
+<h2>Your Total Bill for This Cart</h2>
+<p>Total: <strong>{{ total_bill }}</strong> BDT</p>
+<a href="{% url 'view_cart' %}">Back to Cart</a>
+{% endblock %}

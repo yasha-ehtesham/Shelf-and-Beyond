@@ -47,6 +47,22 @@
                 <form action="{% url 'send_message' %}" method="get">
                     <button type="submit" class="button">Send Message</button>
                 </form>
+                <br>
+                 
+                {% if listing.status != 'sold' %}
+                <form action="{% url 'add_to_cart' %}" method="get">
+                    {% if request.session.user_id %}
+                    <input type="hidden" name="cart_item" value="{{ listing.listing_id }}">
+                    <button type="submit" class="button">Add to cart</button>
+                    {% endif %}
+                </form>
+                {% endif %}
+
+
+                <br>
+
+                
+
             </div>
         </div>
 

@@ -36,6 +36,7 @@ header {
 .search-container {
     display: flex;
     align-items: center;
+    gap: 10px;
 }
 
 .search-container input {
@@ -63,6 +64,7 @@ header {
     border: none;
     cursor: pointer;
 }
+
 
 
 
@@ -248,7 +250,7 @@ img.listing-image {
 }
 
 .book-title {
-    font-size: 30px;
+    font-size: 20px;
     font-weight: bold;
     margin: 10px 0;
     color: white;

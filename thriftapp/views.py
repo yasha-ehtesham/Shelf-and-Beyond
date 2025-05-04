@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import SignupForm1, SignupForm2
 from .forms import ListingForm, ReviewForm
-from .models import WebUser, Role, AdminProfile, Listing, Review
+from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
@@ -26,6 +26,156 @@ NYT_API_KEY = os.getenv('NYT_API_KEY')
 
 
 # Create your views here.
+
+def add_to_cart(request):
+    listing_id = request.GET.get('cart_item')
+    listing = Listing.objects.get(listing_id=listing_id)
+
+    # Initialize cart if it doesn't exist
+    cart = request.session.get('cart', [])
+
+    if listing_id not in cart:
+        cart.append(listing_id)
+        request.session['cart'] = cart  # Save updated cart to session
+
+    context = {
+        "listing": listing
+    }
+
+    return render(request, "add_to_cart.html", context)
+
+
+def view_cart(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')  # Or your custom login view
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    # listings = Listing.objects.filter(listing_id__in=cart)
+    purchased_ids = Purchase.objects.filter(buyer=web_user).values_list('listing__listing_id', flat=True)
+    listings = Listing.objects.filter(listing_id__in=cart).exclude(listing_id__in=purchased_ids)
+    
+    return render(request, "view_cart.html", {
+        'listings': listings,
+        'purchased_ids': purchased_ids
+    })
+
+
+def confirm_all_purchases(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'  # 👈 mark as sold
+            listing.save()
+
+    # Clear cart after successful grouped purchase
+    request.session['cart'] = []
+
+    return redirect('view_purchase_history')
+
+
+# def confirm_purchase(request, listing_id):
+#     web_user_id = request.session.get('user_id')
+#     if not web_user_id:
+#         return redirect('login_step')
+
+#     web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+#     if request.method == "POST":
+#         listing = get_object_or_404(Listing, pk=listing_id)
+
+#         # Prevent duplicate purchases
+#         if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+#             Purchase.objects.create(
+#                 buyer=web_user,
+#                 listing=listing,
+#                 seller=listing.seller,
+                
+#             )
+
+#             # Remove this listing from the cart after successful purchase
+#             cart = request.session.get('cart', [])
+#             str_id = str(listing.listing_id)  # Ensure ID is compared as a string
+#             if str_id in cart:
+#                 cart.remove(str_id)
+#                 request.session['cart'] = cart
+
+#     return redirect('view_cart')
+
+
+def view_total_bill(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    # Only consider purchases that are:
+    # - in the cart
+    # - confirmed (exist in Purchase model for this user)
+    purchases = Purchase.objects.filter(
+        buyer=web_user,
+        listing__listing_id__in=cart
+    )
+
+    total_bill = sum(purchase.listing.price for purchase in purchases)
+
+    return render(request, "view_total_bill.html", {
+        'total_bill': total_bill
+    })
+
+
+def view_purchase_history(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    groups = PurchaseGroup.objects.filter(buyer=web_user).order_by('-timestamp')
+
+    return render(request, "purchase_history.html", {
+        'groups': groups
+    })
+
+
+def remove_from_cart(request):
+    listing_id = request.POST.get('listing_id')
+    cart = request.session.get('cart', [])
+    if listing_id and listing_id in cart:
+        cart.remove(listing_id)
+        request.session['cart'] = cart
+    return redirect('view_cart')  # or your cart page URL name
+
+
+# def seller_public_profile(request, seller_id):
+#     seller = get_object_or_404(WebUser, pk=seller_id)  # pk = web_user_id
+#     return render(request, 'seller_profile.html', {'seller': seller})
+
+
 #-----------------------------------------------------------------------------
 #yasha module 2 views 
 
@@ -190,11 +340,13 @@ def admin_dashboard(request):
 def home(request):
     return render(request, "homepage.html", {})
 
-def welcome_page(request):
+def welcome_page(request): #login view
     if 'user_id' not in request.session:
         return redirect('login_step')
 
     user = WebUser.objects.get(pk=request.session['user_id'])
+
+    # request.session['web_user_id'] = user.web_user_id
     return render(request, "home.html", {'user': user})
 
 

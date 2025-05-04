@@ -14,15 +14,25 @@
             <div class="search-container">
                 <input type="text" placeholder="Search by book name or author name">
                 <button class="search-btn">🔍</button>
-                <button class="cart-btn">🛒</button>
+                <a href="{% url 'view_cart' %}">
+                    <button type="button" class="cart-btn">🛒</button>
+                </a>
             </div>
+
+
             <div class="auth-buttons">
-                <a href="{% url 'login_step' %}"><button class="login">LOG IN</button></a>
-                <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
+                {% if request.session.user_id %}
+                    <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
+                {% else %}
+                    <a href="{% url 'login_step' %}"><button class="login">LOG IN</button></a>
+                    <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
+                {% endif %}
             </div>
+
+
         </div>
         <nav class="nav-links">
-            <a href="#">Home</a>
+            <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
             <div class="dropdown">
                 <a href="#" class="category-link">Category ▾</a>
             </div>
