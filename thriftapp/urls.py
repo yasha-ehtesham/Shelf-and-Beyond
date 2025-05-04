@@ -30,6 +30,7 @@ urlpatterns = [
     
     path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
     path('purchase_history/', views.view_purchase_history, name='view_purchase_history'),
+    path('view_all_webusers/', views.view_all_webusers, name='view_all_webusers'),
 
     #zoie's urls
     path('seller_profile/<int:seller_id>/', views.seller_public_profile, name='seller_profile'),
