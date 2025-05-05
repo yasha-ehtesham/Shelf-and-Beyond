@@ -30,6 +30,74 @@ NYT_API_KEY = os.getenv('NYT_API_KEY')
 
 
 # Create your views here.
+#------------------------------------------------------------------------
+
+
+@login_required
+def admin_delete_listing(request, listing_id):
+    # Ensure that only admins can delete
+    if not request.user.is_superuser:
+        return redirect('show_listings')  # Redirect if not an admin
+    
+    listing = get_object_or_404(Listing, pk=listing_id)
+
+    
+    listing.is_deleted = True
+    listing.save()
+
+    
+
+    return redirect('show_listings')  # Redirect back to the listings page
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_view_interaction_history(request, user_id):
+    user = get_object_or_404(WebUser, pk=user_id)
+
+    listings_created = Listing.objects.filter(seller=user)
+    books_sold = Purchase.objects.filter(seller=user).select_related('buyer', 'listing')
+    books_bought = Purchase.objects.filter(buyer=user).select_related('seller', 'listing')
+
+    context = {
+        'target_user': user,
+        'listings_created': listings_created,
+        'books_sold': books_sold,
+        'books_bought': books_bought,
+    }
+    return render(request, 'admin_view_interaction_history.html', context)
+
+
+
+
+def interaction_history(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+      return redirect('login_step') 
+    
+    user = WebUser.objects.get(pk=web_user_id)
+
+    # Listings created by the user
+    listings_created = Listing.objects.filter(seller=user)
+
+    # Books sold by the user (others bought from this user)
+    books_sold = Purchase.objects.filter(seller=user).select_related('buyer', 'listing')
+
+    # Books bought by the user (this user bought from others)
+    books_bought = Purchase.objects.filter(buyer=user).select_related('seller', 'listing')
+
+    context = {
+        'listings_created': listings_created,
+        'books_sold': books_sold,
+        'books_bought': books_bought,
+    }
+    return render(request, 'interaction_history.html', context)
+
+
+
+
+
+
 #-------------------------------------------------------------------------
 @user_passes_test(lambda u: u.is_superuser)
 def view_all_webusers(request):
@@ -183,7 +251,8 @@ def remove_from_cart(request):
 
 
 def show_listings(request):
-    listings = Listing.objects.all()   
+
+    listings = Listing.objects.filter(is_deleted=False)  # Only show listings that are not deleted 
 
     paginator = Paginator(listings, 4)  # Show 4 listings per page (adjust as needed)
     page_number = request.GET.get('page')

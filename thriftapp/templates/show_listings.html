@@ -30,7 +30,15 @@
                             <input type="hidden" name="listing_id" value="{{ listing.listing_id }}"> 
                             <button type="submit" class="details_listing">View Details</button>
                         </form>
-                        <!-- a get request is submitted to go to this page -->
+                        <br>
+
+                        {% if request.user.is_superuser %}
+                        <form action="{% url 'admin_delete_listing' listing.listing_id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="admin_delete_listing">Delete</button>
+                        </form>
+                        {% endif %}
+                        
             
                     </div>
                 </div>
