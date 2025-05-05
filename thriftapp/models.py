@@ -78,7 +78,10 @@ class Listing(models.Model):
     listing_time = models.DateTimeField(auto_now_add=True)
 
     # Seller FK
-    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)   
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)  
+
+    # New 'is_deleted' field with a default value of False
+    is_deleted = models.BooleanField(default=False) 
 
     def __str__(self):
         return f"{self.title} - {self.status}"

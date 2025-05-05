@@ -23,14 +23,13 @@
             </div>
             <div class="auth-buttons">
                 {% if request.session.user_id %}
+
+                    <a href="{% url 'create_listing' %}"><button class="create_listing">CREATE LISTING</button></a>
                     <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
-                    
-                    <form action="{% url 'create_listing' %}" method="get">
-                        <button type="submit" class="create_listing">CREATE LISTING</button>
-                    </form>
 
                 {% elif request.user.is_superuser %}
                     <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
+                    <br>
 
 
                 {% else %}
