@@ -13,14 +13,15 @@
         <div class="navbar">
             <div class="logo">Shelf and Beyond</div>
             <div class="search-container">
-                <input type="text" placeholder="Search by book name or author name">
-                <button class="search-btn">🔍</button>
-
+                <form action="{% url 'search_results' %}" method="GET">
+                    <input type="text" name="q" placeholder="Search by book name or author name" value="{{ query|default_if_none:'' }}">
+                    <button type="submit" class="search-btn">🔍</button>
+                </form>
                 <a href="{% url 'view_cart' %}">
                     <button type="button" class="cart-btn">🛒</button>
                 </a>
-
             </div>
+
             <div class="auth-buttons">
                 {% if request.session.user_id %}
                     <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
@@ -29,8 +30,6 @@
                     <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
                 {% endif %}
             </div>
-
-
         </div>
         <nav class="nav-links">
             <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>

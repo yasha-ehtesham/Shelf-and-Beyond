@@ -36,6 +36,7 @@ urlpatterns = [
     path('manage_listings/', views.manage_listings, name='manage_listings'),
     path('message/send/<int:seller_id>/', views.send_message, name='send_message'),
     path('message_show/', views.show_message, name='show_message'),
+    path('search/', views.search_results, name='search_results'),
     path('pet_adoption/', views.pet_adoption, name='pet_adoption'),
     path('show_pet_adoption/', views.show_adoption_listings, name='show_adoption_listings'),
     path('pet_adoption_details/', views.pet_adoption_details, name='details_adoption_listing'),

@@ -632,3 +632,30 @@ def manage_adoption_listings(request):
 
     return render(request, 'manage_adoption_listings.html', {'pet_adoptions': pet_adoptions})
 
+def search_results(request):
+    query = request.GET.get('q', '')
+    listings = []
+    purchases = []
+    
+    if query:
+        # Search listings (books)
+        listings = Listing.objects.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(description__icontains=query)
+        ).select_related('seller')
+        
+        # Search purchases (orders) - only for logged-in users
+        if request.user.is_authenticated:
+            purchases = Purchase.objects.filter(
+                Q(listing__title__icontains=query) |
+                Q(listing__author__icontains=query),
+                buyer__user=request.user
+            ).select_related('listing', 'buyer', 'seller')
+    
+    context = {
+        'query': query,
+        'listings': listings,
+        'purchases': purchases,
+    }
+    return render(request, 'search_results.html', context)

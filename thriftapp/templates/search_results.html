@@ -1,0 +1,101 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block content %}
+<div class="search-results-container">
+    <h2>Search Results for "{{ query }}"</h2>
+    
+    {% if listings or purchases %}
+        {% if listings %}
+        <h3>Books</h3>
+        <div class="listings-grid">
+            {% for listing in listings %}
+            <div class="listing-card">
+                {% if listing.image %}
+                <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+                {% endif %}
+                <h4>{{ listing.title }}</h4>
+                <p>Author: {{ listing.author }}</p>
+                <p>Price: ${{ listing.price }}</p>
+                <p>Condition: {{ listing.get_condition_display }}</p>
+                <p>Status: {{ listing.get_status_display }}</p>
+
+            </div>
+            {% empty %}
+            <p>No books found matching your search.</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if purchases %}
+        <h3>Your Orders</h3>
+        <div class="purchases-list">
+            {% for purchase in purchases %}
+            <div class="purchase-card">
+                <h4>{{ purchase.listing.title }}</h4>
+                <p>Author: {{ purchase.listing.author }}</p>
+                <p>Price: ${{ purchase.listing.price }}</p>
+                <p>Status: {{ purchase.get_status_display }}</p>
+                <p>Purchase Date: {{ purchase.purchase_date|date:"F d, Y" }}</p>
+                <p>Seller: {{ purchase.seller.get_full_name }}</p>
+            </div>
+            {% empty %}
+            <p>No orders found matching your search.</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <p>No results found for "{{ query }}". Please try different keywords.</p>
+    {% endif %}
+</div>
+
+<style>
+.search-results-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.listing-card {
+    border: 1 협 solid #ddd;
+    padding: 1rem;
+    border-radius: 8px;
+    background: white;
+}
+
+.listing-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.purchase-card {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background: white;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.btn:hover {
+    background: #45a049;
+}
+</style>
+{% endblock %}
