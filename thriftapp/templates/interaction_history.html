@@ -1,0 +1,61 @@
+{% extends "base2.html" %}
+{% block content %}
+
+<div class="centered-content">
+    <h2>Your History on Shelf and Beyond</h2>
+    <div class="hist-text-container">
+        
+        <div class="hist-text-box">
+            <h3>Listings You Created</h3>
+            <ul>
+                {% for listing in listings_created %}
+                    <li>
+                        <strong>{{ listing.title }}</strong> - Status: {{ listing.get_status_display }} - Listed on {{ listing.listing_time|date:"M d, Y H:i" }}
+                    </li>
+                {% empty %}
+                    <li>No listings created yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <br>
+        <div class="hist-text-box">
+        
+
+            <h3>Books You Sold</h3>
+            <ul>
+                {% for sale in books_sold %}
+                    <li>
+                        <strong>{{ sale.listing.title }}</strong> sold to <em>{{ sale.buyer.firstname }} {{ sale.buyer.lastname }}</em> on {{ sale.purchase_date }}
+                        for {{ sale.listing.price }} BDT
+                    </li>
+                {% empty %}
+                    <li>No books sold yet.</li>
+                {% endfor %}
+            </ul>
+
+        </div>
+
+        <br>
+
+        <div class="hist-text-box">
+
+            <h3>Books You Bought</h3>
+            <ul>
+                {% for purchase in books_bought %}
+                    <li>
+                        <strong>{{ purchase.listing.title }}</strong> bought from <em>{{ purchase.seller.firstname }} {{ purchase.seller.lastname }}</em> on {{ purchase.purchase_date }}
+                        for {{ purchase.listing.price }} BDT
+                    </li>
+                {% empty %}
+                    <li>No books purchased yet.</li>
+                {% endfor %}
+            </ul>
+
+        </div>
+
+        <br>
+    </div>
+
+    {% endblock %}
+</div>

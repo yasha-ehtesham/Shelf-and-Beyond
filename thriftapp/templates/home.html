@@ -11,6 +11,11 @@
             <form action="{% url 'create_listing' %}" method="get">
                 <button type="submit" class="create_listing">CREATE LISTING</button>
             </form>
+
+            <br>
+            <form action="{% url 'interaction_history' %}" method="get">
+                <button type="submit" class="interaction_history">View all history</button>
+            </form>
         <br>
             <form action="{% url 'pet_adoption' %}" method="get">
                 <button type="submit" class="pet_adoption">CREATE ADOPTION LISTING</button>
@@ -38,7 +43,11 @@
                     <h3>Earnings</h3>
                     <p>{{ earnings|floatformat:2 }} BDT</p>
                 </div>
-            </div>
+            </div>            <br>
+            <form action="{% url 'interaction_history' %}" method="get">
+                <button type="submit" class="interaction_history">View all history</button>
+            </form>
+
         </div>
         <br>
 

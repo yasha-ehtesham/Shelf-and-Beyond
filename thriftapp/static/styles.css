@@ -150,6 +150,8 @@ main {
     /* No background color here — we want the image to show through */
 }
 
+
+
 main .book-background {
     background-image: url('image/bookshelf.jpg'); 
     background-size: cover;
@@ -295,4 +297,92 @@ img.listing-image {
 
 .review-link:hover {
     background-color: #4d1f1f;
+}
+
+
+
+.cart-text-box {
+    /* display: flex;
+    justify-content: center; */
+    background-color: #f1d6b4;
+    padding: 30px;
+    border-radius: 10px;
+    width: 700px;
+    
+}
+
+.table-text-box {
+
+
+    background-color: #f1d6b4;
+    padding: 30px;
+    border-radius: 10px;
+    display: inline-block; /* Shrinks to fit content */
+    /* width: 700px; */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+}
+
+
+.cart-text-container {
+    text-align: justify;
+    color: #333;
+    font-family: 'Georgia', serif;
+}
+
+
+.one-cart-listing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #fff;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    
+}
+
+
+.hist-text-box {
+    /* display: flex;
+    justify-content: center; */
+    background-color: #f1d6b4;
+    padding: 30px;
+    border-radius: 10px;
+    width: 700px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+.hist-text-container {
+    text-align: justify;
+    color: black;
+    font-family: 'Georgia', serif;
+}
+
+
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Georgia', serif;
+    color: black;
+}
+
+.user-table th {
+    background-color: #d9b382;
+    padding: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.user-table td {
+    background-color: #fff4e1;
+    padding: 10px;
+}
+
+.user-table a {
+    color: black;
+    text-decoration: underline;
+    font-weight: bold;
 }

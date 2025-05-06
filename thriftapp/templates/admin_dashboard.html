@@ -3,6 +3,27 @@
 {% block content %}
 <div class="centered-content">
     <h1>Welcome, Admin {{ request.user.username }}!</h1>
-    <p>You are logged in as an admin</p>
+    <h2>Admin Dashboard</h2>
+
+    <br><br>
+
+    <div class="cart-text-box">
+        <div class="cart-text-container">
+            <ul>
+                <li><strong>Total Books Listed on the website:</strong> {{ total_books_listed }}</li>
+                <li><strong>Total Books Sold on the website:</strong> {{ total_books_sold }}</li>
+                <li><strong>Total Revenue:</strong> {{ total_revenue|floatformat:2 }} BDT</li>
+                <li><strong>System Earnings:</strong> {{ system_earnings|floatformat:2 }} BDT</li>
+            </ul>
+        </div>
+    </div>
+
+    <br><br>
+
+    <div class="list-buttons">
+        <form action="{% url 'view_all_webusers' %}" method="get">
+            <button type="submit" class="all_webusers">View all Users</button>
+        </form>
+    </div>
 </div>
 {% endblock %}
