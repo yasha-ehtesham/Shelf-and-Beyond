@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import SignupForm1, SignupForm2
 from .forms import ListingForm, ReviewForm, InboxForm
@@ -548,3 +547,88 @@ def welcome_page(request):
 
     # request.session['web_user_id'] = user.web_user_id
     return render(request, "home.html", context)
+
+from django.contrib import messages
+from .models import WebUser, PetAdoption  # Updated to reflect the new model name
+from .forms import PetAdoptionForm  # Updated to reflect the new form
+
+def pet_adoption(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')  # User must be logged in
+
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
+
+    if request.method == 'POST':  # When form is filled
+        form = PetAdoptionForm(request.POST, request.FILES)
+        if form.is_valid():
+            listing = form.save(commit=False)
+            listing.seller = user  # Connect to logged-in user
+            listing.status = 'available'  # Manually set status
+
+            # Save the image if uploaded
+            if 'image' in request.FILES:
+                listing.image = request.FILES['image']  # Save uploaded image
+            listing.save()  # Save to database
+            messages.success(request, "Pet listing created successfully!")
+            return redirect('pet_adoption')  # Redirect after success
+        else:
+            print("Form errors:", form.errors.as_json())
+            messages.error(request, "Form is not valid.")
+    else:  # For GET request
+        print("Page opened and form is empty")
+        form = PetAdoptionForm()  # Empty form
+
+    return render(request, 'pet_adoption.html', {'form': form})
+
+from django.core.paginator import Paginator
+from .models import PetAdoption  # Ensure you import the PetAdoption model
+
+def show_adoption_listings(request):
+    # Query PetAdoption objects instead of Listing
+    pet_adoptions = PetAdoption.objects.all()   
+
+    paginator = Paginator(pet_adoptions, 4)  # Show 4 listings per page (adjust as needed)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj
+    }
+    return render(request, "show_adoption_listings.html", context)
+
+from .models import PetAdoption
+
+def pet_adoption_details(request):
+    listing_id = request.GET.get('listing_id')
+    listing = get_object_or_404(PetAdoption, listing_id=listing_id)
+    context = {
+        'listing': listing
+    }
+    return render(request, 'pet_adoption_details.html', context)
+
+
+
+from django.http import HttpResponse
+from .models import PetAdoption
+from .forms import PetAdoptionForm
+
+def manage_adoption_listings(request):
+    user = WebUser.objects.get(pk=request.session['user_id'])
+    pet_adoptions = PetAdoption.objects.filter(seller=user)
+
+    if request.method == 'POST':
+        listing_id = request.POST.get('listing_id')
+        action = request.POST.get('action')
+        try:
+            listing = PetAdoption.objects.get(id=listing_id)
+            if action == 'adopted':
+                listing.status = 'Adopted'
+            elif action == 'cancelled':
+                listing.status = 'Cancelled'
+            listing.save()
+        except PetAdoption.DoesNotExist:
+            return HttpResponse("Listing not found.")
+        return redirect('manage_adoption_listings')
+
+    return render(request, 'manage_adoption_listings.html', {'pet_adoptions': pet_adoptions})
+

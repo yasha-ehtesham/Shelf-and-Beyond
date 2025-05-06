@@ -49,3 +49,14 @@ class InboxForm(forms.ModelForm):
             'sender_name': forms.TextInput(attrs={'placeholder': 'Your Name', 'required': True}),
             'message': forms.Textarea(attrs={'placeholder': 'Your Message...', 'rows': 6, 'required': True}),
         }
+
+
+from .models import PetAdoption
+
+from django import forms
+from .models import PetAdoption  # Updated to reflect the new model name
+
+class PetAdoptionForm(forms.ModelForm):
+    class Meta:
+        model = PetAdoption
+        fields = ['title', 'description', 'age', 'food_habit', 'potty_trained', 'breed', 'gender']

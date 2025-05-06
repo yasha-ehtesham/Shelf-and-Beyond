@@ -1,4 +1,6 @@
-{% load static %}
+{% extends "base2.html" %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,38 +53,20 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container-fluid">
-        <a class="navbar-brand text-white" href="#">Shelf & Beyond</a>
-        <div class="d-flex justify-content-between w-100">
-            <form class="d-flex search-bar" role="search">
-                <input class="form-control" type="search" placeholder="Search by book name or author name" aria-label="Search">
-                <button class="btn btn-outline-light" type="submit">Search</button>
-            </form>
-            <div class="navbar-profile d-flex gap-2">
-                <a href="/profile" class="btn btn-outline-light">Profile</a>
-                <form action="{% url 'logout' %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-light">Log out</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</nav>
+
 
 <!-- Page Layout -->
 <div class="d-flex">
 
     <!-- Side Navigation -->
     <div class="side-navigation">
-        <a href="/browseall" class="btn btn-dark">Browse All</a>
+        <a href="/show_listings/" class="btn btn-dark">Browse All</a>
         <a href="/notifications" class="btn btn-dark">Notifications</a>
-        <a href="/inbox" class="btn btn-dark">Inbox</a>
+        <a href="/message_show/" class="btn btn-dark">Inbox</a>
         <a href="/buying" class="btn btn-dark">Buying</a>
         <a href="/selling" class="btn btn-dark">Selling</a>
         <a href="/listing/create" class="btn btn-dark">Create Listing</a>
-        <a href="/listing/manage" class="btn btn-dark">Manage Listings</a>
+        <a href="/manage_listings/" class="btn btn-dark">Manage Listings</a>
     </div>
 
     <!-- Main Content -->
@@ -128,3 +112,4 @@
 
 </body>
 </html>
+{% endblock %}

@@ -35,5 +35,10 @@ urlpatterns = [
     path('listing/create/', views.create_listing, name='create_listing'),
     path('manage_listings/', views.manage_listings, name='manage_listings'),
     path('message/send/<int:seller_id>/', views.send_message, name='send_message'),
-    path('message/show/', views.show_message, name='show_message'),
+    path('message_show/', views.show_message, name='show_message'),
+    path('pet_adoption/', views.pet_adoption, name='pet_adoption'),
+    path('show_pet_adoption/', views.show_adoption_listings, name='show_adoption_listings'),
+    path('pet_adoption_details/', views.pet_adoption_details, name='details_adoption_listing'),
+    path('manage_adoption_listings', views.manage_adoption_listings, name='manage_adoption_listings'),
+    
 ]

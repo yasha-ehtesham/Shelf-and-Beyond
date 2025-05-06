@@ -131,3 +131,24 @@ class Inbox(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
+    
+from django.db import models
+
+class PetAdoption(models.Model):
+    listing_id = models.AutoField(primary_key=True)  # Serial number for the listing
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    age = models.PositiveIntegerField()
+    food_habit = models.CharField(max_length=100)
+    potty_trained = models.BooleanField()
+    breed = models.CharField(max_length=100)
+    gender = models.CharField(max_length=6, choices=[('male', 'Male'), ('female', 'Female')])
+    seller = models.ForeignKey('WebUser', on_delete=models.CASCADE)  # Link to the user (adopter)
+    status = models.CharField(max_length=20, default='available')
+    image = models.ImageField(upload_to='pet_images/', null=True, blank=True)  # Added image field
+
+    class Meta:
+        db_table = 'petadoptiondb'  # Custom table name
+
+    def __str__(self):
+        return self.title
