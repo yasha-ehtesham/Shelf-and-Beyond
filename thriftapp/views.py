@@ -608,19 +608,21 @@ def pet_adoption_details(request):
 
 
 
-from django.http import HttpResponse
-from .models import PetAdoption
-from .forms import PetAdoptionForm
-
 def manage_adoption_listings(request):
+
     user = WebUser.objects.get(pk=request.session['user_id'])
     pet_adoptions = PetAdoption.objects.filter(seller=user)
+
 
     if request.method == 'POST':
         listing_id = request.POST.get('listing_id')
         action = request.POST.get('action')
+
         try:
-            listing = PetAdoption.objects.get(id=listing_id)
+
+            listing = PetAdoption.objects.get(listing_id=listing_id)
+
+
             if action == 'adopted':
                 listing.status = 'Adopted'
             elif action == 'cancelled':
@@ -628,7 +630,10 @@ def manage_adoption_listings(request):
             listing.save()
         except PetAdoption.DoesNotExist:
             return HttpResponse("Listing not found.")
+
+
         return redirect('manage_adoption_listings')
+
 
     return render(request, 'manage_adoption_listings.html', {'pet_adoptions': pet_adoptions})
 

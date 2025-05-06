@@ -12,16 +12,7 @@
 <!-- Page Layout -->
 <div class="d-flex">
 
-    <!-- Side Navigation -->
-    <div class="side-navigation">
-        <a href="/show_listings/" class="btn btn-dark">Browse All</a>
-        <a href="/notifications" class="btn btn-dark">Notifications</a>
-        <a href="/message/show/" class="btn btn-dark">Inbox</a>
-        <a href="/buying" class="btn btn-dark">Buying</a>
-        <a href="/selling" class="btn btn-dark">Selling</a>
-        <a href="/listing/create" class="btn btn-dark">Create Listing</a>
-        <a href="/manage_adoption_listings/" class="btn btn-dark">Manage Adoption Listings</a>
-    </div>
+
 
     <!-- Main Content -->
     <div class="main-content">
@@ -45,18 +36,12 @@
                 <p><strong>Potty Trained:</strong> {{ listing.potty_trained|yesno:"Yes,No" }}</p>
                 <p><strong>Gender:</strong> {{ listing.get_gender_display }}</p>
             </div>
-            <div class="col-md-3 d-flex align-items-center">
+            <div class="col-md- d-flex align-items-center">
                 <form method="POST" class="d-inline me-2">
                     {% csrf_token %}
                     <input type="hidden" name="listing_id" value="{{ listing.listing_id }}">
-                    <input type="hidden" name="action" value="adopted">
-                    <button type="submit" class="btn btn-success btn-manage">Mark as Adopted</button>
-                </form>
-                <form method="POST" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="listing_id" value="{{ listing.listing_id }}">
-                    <input type="hidden" name="action" value="cancelled">
-                    <button type="submit" class="btn btn-danger btn-manage">Cancel</button>
+                    <input type="hidden" name="action" value="adopt">
+                    <button type="submit" class="btn btn-success btn-manage">Adopt</button>
                 </form>
             </div>
         </div>
