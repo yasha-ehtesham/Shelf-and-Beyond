@@ -1,0 +1,182 @@
+{% extends "base2.html" %}
+{% load static %}
+
+{% block content %}
+<div class="centered-content">
+    {% if request.session.user_id %}
+
+        <!-- Metrics Section -->
+        <div class="metrics">
+            <h2>Your Stats</h2>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <h3>Total Books Listed</h3>
+                    <p>{{ total_books_listed }}</p>
+                </div>
+                <div class="metric-box">
+                    <h3>Books Sold</h3>
+                    <p>{{ books_sold }}</p>
+                </div>
+                <div class="metric-box">
+                    <h3>Books Purchased</h3>
+                    <p>{{ books_purchased }}</p>
+                </div>
+                <div class="metric-box">
+                    <h3>Earnings</h3>
+                    <p>{{ earnings|floatformat:2 }} BDT</p>
+                </div>
+            </div>
+        </div>
+        <br>
+
+        <!-- Transactions Section -->
+        <div class="transactions">
+            <h2>Your Transactions</h2>
+
+            <!-- Pending Transactions -->
+            <h3>Pending Transactions</h3>
+            {% if pending_transactions %}
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Buyer</th>
+                            <th>Seller</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in pending_transactions %}
+                            <tr>
+                                <td>{{ transaction.listing.title }}</td>
+                                <td>{{ transaction.buyer.firstname }} {{ transaction.buyer.lastname }}</td>
+                                <td>{{ transaction.seller.firstname }} {{ transaction.seller.lastname }}</td>
+                                <td>{{ transaction.listing.price|floatformat:2 }} BDT</td>
+                                <td>{{ transaction.status }}</td>
+                                <td>{{ transaction.purchase_date|date:"F d, Y H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No pending transactions.</p>
+            {% endif %}
+            <br>
+
+            <!-- Active Transactions -->
+            <h3>Active Transactions</h3>
+            {% if active_transactions %}
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Buyer</th>
+                            <th>Seller</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in active_transactions %}
+                            <tr>
+                                <td>{{ transaction.listing.title }}</td>
+                                <td>{{ transaction.buyer.firstname }} {{ transaction.buyer.lastname }}</td>
+                                <td>{{ transaction.seller.firstname }} {{ transaction.seller.lastname }}</td>
+                                <td>{{ transaction.listing.price|floatformat:2 }} BDT</td>
+                                <td>{{ transaction.status }}</td>
+                                <td>{{ transaction.purchase_date|date:"F d, Y H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No active transactions.</p>
+            {% endif %}
+            <br>
+
+            <!-- Completed Transactions -->
+            <h3>Completed Transactions</h3>
+            {% if completed_transactions %}
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Buyer</th>
+                            <th>Seller</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in completed_transactions %}
+                            <tr>
+                                <td>{{ transaction.listing.title }}</td>
+                                <td>{{ transaction.buyer.firstname }} {{ transaction.buyer.lastname }}</td>
+                                <td>{{ transaction.seller.firstname }} {{ transaction.seller.lastname }}</td>
+                                <td>{{ transaction.listing.price|floatformat:2 }} BDT</td>
+                                <td>{{ transaction.status }}</td>
+                                <td>{{ transaction.purchase_date|date:"F d, Y H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No completed transactions.</p>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <p>Please log in to view your transactions and stats.</p>
+    {% endif %}
+</div>
+
+<style>
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .metric-box {
+        background-color: #d1a66d;
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .metric-box h3 {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+    }
+    .metric-box p {
+        font-size: 1.5em;
+        margin: 0;
+    }
+    .transactions {
+        margin-top: 30px;
+    }
+    .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fef1dd;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .transaction-table th, .transaction-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #d9b27f;
+    }
+    .transaction-table th {
+        background-color: #ba8c63;
+        color: white;
+    }
+    .transaction-table tr:last-child td {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

@@ -34,13 +34,7 @@
         </div>
         <nav class="nav-links">
             <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
-            <div class="dropdown">
-                <a href="#" class="category-link">Category ▾</a>
-                <!-- <a href="#">Category ▾</a> -->
-            </div>
-            <a href="#">Genre</a>
-            <a href="#">Authors</a>
-            <a href="#">Bestsellers</a>
+            
             <a href="{% url 'show_listings' %}">All Listings</a>
             
            

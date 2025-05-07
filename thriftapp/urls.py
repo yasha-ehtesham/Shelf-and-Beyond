@@ -47,5 +47,7 @@ urlpatterns = [
     path('show_pet_adoption/', views.show_adoption_listings, name='show_adoption_listings'),
     path('pet_adoption_details/', views.pet_adoption_details, name='details_adoption_listing'),
     path('manage_adoption_listings', views.manage_adoption_listings, name='manage_adoption_listings'),
-    
+
+    path('stats-and-trans/', views.stats_and_transactions_view, name='stats_and_transactions'),
 ]
+    
