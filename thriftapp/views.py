@@ -730,3 +730,44 @@ def search_results(request):
         'purchases': purchases,
     }
     return render(request, 'search_results.html', context)
+
+
+
+def stats_and_transactions_view(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return render(request, 'login_required.html')  # or redirect to login
+
+    user = get_object_or_404(WebUser, pk=user_id)
+
+    # Metrics
+    total_books_listed = Listing.objects.filter(seller=user).count()
+    books_sold = Purchase.objects.filter(seller=user, status='DELIVERED').count()
+    books_purchased = Purchase.objects.filter(buyer=user).count()
+    earnings = Purchase.objects.filter(seller=user, status='DELIVERED').aggregate(
+        total_earnings=Sum('listing__price')
+    )['total_earnings'] or 0
+
+    # Transactions
+    pending_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='CONFIRMED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    active_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='SHIPPED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    completed_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='DELIVERED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+
+    context = {
+        'user': user,
+        'total_books_listed': total_books_listed,
+        'books_sold': books_sold,
+        'books_purchased': books_purchased,
+        'earnings': earnings,
+        'pending_transactions': pending_transactions,
+        'active_transactions': active_transactions,
+        'completed_transactions': completed_transactions,
+    }
+
+    return render(request, 'stats_and_trans.html', context)
