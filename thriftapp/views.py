@@ -23,18 +23,21 @@ from django.db.models import Sum
 from decimal import Decimal
 
 load_dotenv()  # Load variables from .env
+import stripe
+from django.views.decorators.csrf import csrf_exempt
 
 GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
 NYT_API_KEY = os.getenv('NYT_API_KEY')
+# STRIPE_API_KEY =  os.getenv("STRIPE_SECRET_KEY") 
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")  
 
-import stripe
-from django.views.decorators.csrf import csrf_exempt
+
+
 
 
 # Create your views here.
 #------------------------------------------------------------------------
 
-stripe.api_key = 'sk_test_51RMEa1BFAT6Ih87e5l4SLujotBbvNadqGou7fRQ7nL7tTBzXxZgFWID2gQkvWLO3RSiT4qvtS74yD9yMD4TGUjow00QhCWMS5D'  #Stripe secret test key
 
 @csrf_exempt
 def checkout(request):
