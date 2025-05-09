@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="overlay-box">
+    <div class="form-container">
+        <h2>Edit Your Profile</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="auth-buttons">Save Changes</button>
+        </form>
+        <br>
+        <a href="{% url 'view_profile' %}" class="btn btn-secondary">Back to Profile</a>
+    </div>
+</div>
+{% endblock %}
+

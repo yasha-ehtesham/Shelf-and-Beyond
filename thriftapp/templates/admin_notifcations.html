@@ -1,0 +1,28 @@
+{% extends 'base2.html' %}
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center mb-4" style="font-family: Georgia, serif; font-weight: bold;">Admin Notifications</h2>
+
+    {% if notifications %}
+        <ul class="list-group">
+            {% for note in notifications %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Notification</strong>: {{ note.message }}<br>
+                        <small class="text-muted">Date: {{ note.timestamp|date:"F j, Y, g:i a" }}</small>
+                    </div>
+                    {% if not note.is_read %}
+                        <span class="badge bg-danger">New</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted text-center">No notifications available.</p>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Back to Admin Dashboard</a>
+    </div>
+</div>
+{% endblock %}

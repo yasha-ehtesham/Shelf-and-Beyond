@@ -33,7 +33,8 @@
 
         </div>
         <nav class="nav-links">
-            <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
+            <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% elif request.user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
+
             <div class="dropdown">
                 <a href="#" class="category-link">Category ▾</a>
                 <!-- <a href="#">Category ▾</a> -->
@@ -42,7 +43,14 @@
             <a href="#">Authors</a>
             <a href="#">Bestsellers</a>
             <a href="{% url 'show_listings' %}">All Listings</a>
-           
+            {% if request.user.is_superuser %}
+            <a href="{% url 'admin_notifications' %}">System Alerts</a>
+            <a href="{% url 'manage_users' %}">Manage Users</a>
+            
+            {% elif request.session.user_id %}
+                <a href="{% url 'notifications' %}">Notifications</a>
+                <a href="{% url 'view_profile' %}">Profile</a>
+            {% endif %}
 
         </nav>
     </header>

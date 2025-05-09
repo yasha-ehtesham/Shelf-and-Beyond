@@ -35,6 +35,7 @@ class AdminProfile(models.Model):
 class WebUser(models.Model):
     web_user_id = models.AutoField(primary_key=True)
 
+
     #new - make migrations for this 
     username = models.CharField(max_length=20, unique=True)
 
@@ -120,4 +121,25 @@ class Purchase(models.Model):
     ]
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='CONFIRMED')
     purchase_group = models.ForeignKey(PurchaseGroup, null=True, blank=True, on_delete=models.CASCADE)
+
+
+class ExternalBookSource(models.Model):
+    source_id = models.AutoField(primary_key=True)
+    listing = models.ForeignKey('Listing', on_delete=models.CASCADE, related_name='external_sources')
+    source_name = models.CharField(max_length=100)  # e.g., "Amazon", "Barnes & Noble"
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # e.g., 15.99
+    url = models.URLField()  # link to the book
+
+    def __str__(self):
+        return f"{self.source_name} - {self.price}"
+#m2f4
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"To: {self.recipient.username} - {self.message[:30]}"
 

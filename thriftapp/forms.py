@@ -37,3 +37,9 @@ class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
         fields = ['rating', 'comment']
+        
+#samin       
+class WebUserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = WebUser
+        fields = ['firstname', 'lastname', 'email', 'phone', 'birthdate', 'bio']

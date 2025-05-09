@@ -29,6 +29,7 @@ urlpatterns = [
     path('total_bill/', views.view_total_bill, name='view_total_bill'),
     
     path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
+    
     path('purchase_history/', views.view_purchase_history, name='view_purchase_history'),
     path('view_all_webusers/', views.view_all_webusers, name='view_all_webusers'),
 
@@ -39,4 +40,13 @@ urlpatterns = [
 
     path('listing/create/', views.create_listing, name='create_listing'),
     path('manage_listings/', views.manage_listings, name='manage_listings'),
+    
+     # Samin
+    path('profile/', views.view_profile, name='view_profile'),
+    path('profile/edit/', views.update_profile, name='update_profile'),
+    path('admin/manage_users/', views.manage_users, name='manage_users'),
+    path('compare_prices/', views.compare_prices, name='compare_prices'),
+    path('notifications/', views.user_notifications, name='notifications'),
+    path('admin_notifications/', views.admin_notifications, name='admin_notifications'),
+
 ]
