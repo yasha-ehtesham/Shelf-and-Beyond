@@ -79,6 +79,8 @@ header {
     cursor: pointer;
 }
 
+
+
 .list-buttons button {
     margin-left: 10px;
     padding: 8px 16px;
@@ -386,3 +388,6 @@ img.listing-image {
     text-decoration: underline;
     font-weight: bold;
 }
+
+
+

@@ -33,9 +33,11 @@
                 <br>
 
                 <div class="auth-buttons">
-                    <form action="{% url 'confirm_all_purchases' %}" method="post">
+                    
+
+                    <form action="{% url 'checkout' %}" method="post">
                         {% csrf_token %}
-                        <button type="submit">Confirm All Purchases</button>
+                        <button type="submit">Checkout</button>
                     </form>
                 </div>
 
