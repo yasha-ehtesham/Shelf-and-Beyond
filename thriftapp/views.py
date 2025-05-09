@@ -27,9 +27,96 @@ load_dotenv()  # Load variables from .env
 GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
 NYT_API_KEY = os.getenv('NYT_API_KEY')
 
+import stripe
+from django.views.decorators.csrf import csrf_exempt
+
 
 # Create your views here.
 #------------------------------------------------------------------------
+
+stripe.api_key = 'sk_test_51RMEa1BFAT6Ih87e5l4SLujotBbvNadqGou7fRQ7nL7tTBzXxZgFWID2gQkvWLO3RSiT4qvtS74yD9yMD4TGUjow00QhCWMS5D'  #Stripe secret test key
+
+@csrf_exempt
+def checkout(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+    
+    # Generate line_items for Stripe
+    line_items = []
+    for item in listings:
+        line_items.append({
+            'price_data': {
+                'currency': 'bdt',
+                'unit_amount': int(item.price) * 100,  # Stripe uses smallest currency unit
+                'product_data': {
+                    'name': item.title,
+                },
+            },
+            'quantity': 1,
+        })
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url=request.build_absolute_uri('/checkout/success/'),
+        cancel_url=request.build_absolute_uri('/checkout/cancel/'),
+    )
+
+    return redirect(session.url, code=303)
+
+def checkout_success(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    if not cart:
+        return render(request, "checkout_success.html", {
+            'message': "Your cart was already empty or purchases were already confirmed."
+        })
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'
+            listing.save()
+
+    # Clear cart
+    request.session['cart'] = []
+
+    return render(request, "checkout_success.html", {
+        'message': "Payment successful! Your purchases have been confirmed."
+    })
+
+
+def checkout_cancel(request):
+    return render(request, "checkout_cancel.html")
+
+
+
+#-----------------------------------------------------------------------
 
 
 @login_required
@@ -164,61 +251,9 @@ def view_cart(request):
     })
 
 
-def confirm_all_purchases(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
-
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
-    cart = request.session.get('cart', [])
-    if not cart:
-        return redirect('view_cart')
-
-    listings = Listing.objects.filter(listing_id__in=cart)
-
-    # Create a new group for this checkout session
-    group = PurchaseGroup.objects.create(buyer=web_user)
-
-    for listing in listings:
-        # Avoid double-purchasing
-        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
-            Purchase.objects.create(
-                buyer=web_user,
-                listing=listing,
-                seller=listing.seller,
-                purchase_group=group
-            )
-            listing.status = 'sold'  # 👈 mark as sold
-            listing.save()
-
-    # Clear cart after successful grouped purchase
-    request.session['cart'] = []
-
-    return redirect('view_purchase_history')
 
 
 
-def view_total_bill(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
-
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
-
-    cart = request.session.get('cart', [])
-    # Only consider purchases that are:
-    # - in the cart
-    # - confirmed (exist in Purchase model for this user)
-    purchases = Purchase.objects.filter(
-        buyer=web_user,
-        listing__listing_id__in=cart
-    )
-
-    total_bill = sum(purchase.listing.price for purchase in purchases)
-
-    return render(request, "view_total_bill.html", {
-        'total_bill': total_bill
-    })
 
 
 def view_purchase_history(request):

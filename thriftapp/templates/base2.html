@@ -24,24 +24,19 @@
 
             <div class="auth-buttons">
                 {% if request.session.user_id %}
-
-                    <a href="{% url 'create_listing' %}"><button class="create_listing">CREATE LISTING</button></a>
-                    <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
-
+                    <a href="{% url 'create_listing' %}"><button class="btn primary">CREATE LISTING</button></a>
+                    <a href="{% url 'logout' %}"><button class="btn danger">LOG OUT</button></a>
                 {% elif request.user.is_superuser %}
-                    <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
-                    <br>
-
-
+                    <a href="{% url 'logout' %}"><button class="btn danger">LOG OUT</button></a>
                 {% else %}
-                    <a href="{% url 'login_step' %}"><button class="login">LOG IN</button></a>
-                    <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
+                    <a href="{% url 'login_step' %}"><button class="btn">LOG IN</button></a>
+                    <a href="{% url 'signup_step1' %}"><button class="btn">SIGN UP</button></a>
                 {% endif %}
             </div>
         </div>
+
         <nav class="nav-links">
             <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% elif request.user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
-            
             <a href="{% url 'show_message' %}">Inbox</a>
             <a href="{% url 'manage_listings' %}">My Listings</a>
             <a href="{% url 'show_listings' %}">All Listings</a>
@@ -53,7 +48,10 @@
 
     <main>
         <div class="book-background">
-            {% block content %}{% endblock %}
+            <div class="overlay"></div>
+            <div class="content-container">
+                {% block content %}{% endblock %}
+            </div>
         </div>
     </main>
 </body>
