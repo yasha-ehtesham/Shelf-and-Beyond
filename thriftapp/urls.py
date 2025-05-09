@@ -25,10 +25,19 @@ urlpatterns = [
     path('remove_from_cart/', views.remove_from_cart, name='remove_from_cart'),
     
     # path('confirm_purchase/<int:listing_id>/', views.confirm_purchase, name='confirm_purchase'),
-    path('total_bill/', views.view_total_bill, name='view_total_bill'),
+    # path('total_bill/', views.view_total_bill, name='view_total_bill'),
     
-    path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
+    # path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
     path('purchase_history/', views.view_purchase_history, name='view_purchase_history'),
+    path('view_all_webusers/', views.view_all_webusers, name='view_all_webusers'),
+
+    path('interaction_history/', views.interaction_history, name='interaction_history'),
+    path('user/<int:user_id>/interactions/', views.admin_view_interaction_history, name='admin_view_interaction_history'),
+    path('listing/<int:listing_id>/delete/', views.admin_delete_listing, name='admin_delete_listing'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('checkout/success/', views.checkout_success, name='checkout_success'),
+    path('checkout/cancel/', views.checkout_cancel, name='checkout_cancel'),
+
 
     #zoie's urls
     path('seller_profile/<int:seller_id>/', views.seller_public_profile, name='seller_profile'),
@@ -41,5 +50,7 @@ urlpatterns = [
     path('show_pet_adoption/', views.show_adoption_listings, name='show_adoption_listings'),
     path('pet_adoption_details/', views.pet_adoption_details, name='details_adoption_listing'),
     path('manage_adoption_listings', views.manage_adoption_listings, name='manage_adoption_listings'),
-    
+
+    path('stats-and-trans/', views.stats_and_transactions_view, name='stats_and_transactions'),
 ]
+    

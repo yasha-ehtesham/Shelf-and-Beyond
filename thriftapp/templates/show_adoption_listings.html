@@ -11,7 +11,11 @@
         <div class="listings-container">
             {% for listing in page_obj %}
                 <div class="listing-card">
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+                   
+                    {% if listing.image %}
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+                    {% endif %}
+
                     <p class="book-title">{{ listing.title }}</p>
 
 

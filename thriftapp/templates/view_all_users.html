@@ -1,0 +1,46 @@
+{% extends "base2.html" %}
+
+{% block content %}
+<div class="centered-content">
+    <h2>All Web Users</h2>
+
+    <div class="table-text-box">
+        <div class="cart-text-container">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Gender</th>
+                        <th>Birthdate</th>
+                        <th>Role</th>
+                        <th>Link to Profile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in webusers %}
+                    <tr>
+                        <td>{{ user.web_user_id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.firstname }} {{ user.lastname }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.gender }}</td>
+                        <td>{{ user.birthdate }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>
+                            <a href="{% url 'admin_view_interaction_history' user.web_user_id %}" style="color: black; text-decoration: underline; font-weight: bold;">
+                                View Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
