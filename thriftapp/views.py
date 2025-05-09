@@ -31,7 +31,7 @@ NYT_API_KEY = os.getenv('NYT_API_KEY')
 # STRIPE_API_KEY =  os.getenv("STRIPE_SECRET_KEY") 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")  
 
-
+# stripe_api_key = os.getenv("STRIPE_SECRET_KEY")  
 
 
 
