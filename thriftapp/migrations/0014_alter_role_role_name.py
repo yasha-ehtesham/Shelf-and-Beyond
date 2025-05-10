@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('thriftapp', '0013_listing_is_deleted_alter_role_role_name_inbox_and_more'),
+        ('thriftapp', '0013_alter_role_role_name_notification_externalbooksource'),
     ]
 
     operations = [

@@ -22,7 +22,7 @@ urlpatterns = [
     path('view_cart/', views.view_cart, name='view_cart'),
     path('remove_from_cart/', views.remove_from_cart, name='remove_from_cart'),
 
-    path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
+    #path('confirm_all/', views.confirm_all_purchases, name='confirm_all_purchases'),
     path('purchase_history/', views.view_purchase_history, name='view_purchase_history'),
     path('view_all_webusers/', views.view_all_webusers, name='view_all_webusers'),
 
