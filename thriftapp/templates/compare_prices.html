@@ -21,8 +21,11 @@
                                         <p class="mb-1" style="font-size: 16px;"><strong>Seller:</strong> {{ listing.seller_name }}</p>
                                         <p class="mb-1" style="font-size: 16px;"><strong>Price:</strong> bdt{{ listing.price }}</p>
                                         <p class="mb-2" style="font-size: 16px;"><strong>Condition:</strong> {{ listing.condition|capfirst }}</p>
-                                        <button class="btn btn-outline-brown btn-sm mt-2" style="border-radius: 20px; font-weight: bold;">Add to Cart</button>
-
+                                        <form method="get" action="{% url 'add_to_cart' %}" style="display: inline;">
+                                            <input type="hidden" name="cart_item" value="{{ listing.listing_id }}">
+                                            <button type="submit" class="btn btn-outline-brown btn-sm mt-2" style="border-radius: 20px; font-weight: bold;">Add to Cart</button>
+                                        </form>
+                                        
                                     </div>
                                 </div>
                             </div>
