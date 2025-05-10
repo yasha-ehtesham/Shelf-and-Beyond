@@ -88,6 +88,11 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
+        
+        #for macOS
+        'OPTIONS': {
+            'unix_socket': '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock',
+        }
     }
 }
 
@@ -148,3 +153,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #----------------
 LOGIN_REDIRECT_URL = "thriftapp:home"
 LOGOUT_REDIRECT_URL = "/" #not working
+
+LOGIN_URL = '/login/' #samin

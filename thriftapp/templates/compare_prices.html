@@ -1,0 +1,41 @@
+{% extends 'basehome.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-5" style="font-family: Georgia, serif; font-weight: bold;">Listing Price Comparison</h1>
+
+    <div class="row justify-content-center g-4">
+        {% for book in books_with_listings %}
+        <div class="col-md-6">
+            <div class="card shadow" style="border-radius: 15px; background-color: #a8744f; color: white; font-family: Georgia, serif;">
+                <div class="card-body">
+                    <h4 class="card-title mb-3" style="font-weight: bold;">{{ book.title }}</h4>
+
+                    {% if book.listings %}
+                        <div class="row g-3">
+                            {% for listing in book.listings %}
+                            <div class="col-12">
+                                <div class="card" style="background-color: #fef1dd; border-radius: 10px; padding: 10px;">
+                                    <div class="card-body text-center" style="color: #000000; font-family: Georgia, serif;">
+                                        <p class="mb-1" style="font-size: 16px;"><strong>Seller:</strong> {{ listing.seller_name }}</p>
+                                        <p class="mb-1" style="font-size: 16px;"><strong>Price:</strong> bdt{{ listing.price }}</p>
+                                        <p class="mb-2" style="font-size: 16px;"><strong>Condition:</strong> {{ listing.condition|capfirst }}</p>
+                                        <button class="btn btn-outline-brown btn-sm mt-2" style="border-radius: 20px; font-weight: bold;">Add to Cart</button>
+
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="color: #fef1dd;">No listings available for this book.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

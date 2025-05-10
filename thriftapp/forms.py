@@ -1,8 +1,6 @@
 from django import forms
-from .models import WebUser, Listing, Review, Inbox
-
 from django.contrib.auth.forms import AuthenticationForm
-
+from .models import WebUser, Listing, Review, Inbox, PetAdoption
 
 
 class SignupForm1(forms.ModelForm):
@@ -12,33 +10,39 @@ class SignupForm1(forms.ModelForm):
         model = WebUser
         fields = ['username', 'password']
 
-class SignupForm2(forms.ModelForm): #signup2 form
+
+class SignupForm2(forms.ModelForm):  # signup2 form
     class Meta:
         model = WebUser
         fields = ['firstname', 'lastname', 'gender', 'email', 'phone', 'birthdate', 'bio']
-          
 
 
-#login form 
+# Login form
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=150)
     password = forms.CharField(widget=forms.PasswordInput)
 
 
-#--------------------------------------------------------
-#Zoie's forms
+# Zoie's forms
 class ListingForm(forms.ModelForm):
     class Meta:
         model = Listing
-        fields = ['title', 'description', 'image', 'price', 'condition', 'author'] #status removed
+        fields = ['title', 'description', 'image', 'price', 'condition', 'author']  # status removed
 
 
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
         fields = ['rating', 'comment']
-        
-        
+
+
+# Samin's form
+class WebUserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = WebUser
+        fields = ['firstname', 'lastname', 'email', 'phone', 'birthdate', 'bio']
+
+
 class InboxForm(forms.ModelForm):
     receiver = forms.ModelChoiceField(queryset=WebUser.objects.all(), widget=forms.HiddenInput())
 
@@ -50,11 +54,6 @@ class InboxForm(forms.ModelForm):
             'message': forms.Textarea(attrs={'placeholder': 'Your Message...', 'rows': 6, 'required': True}),
         }
 
-
-from .models import PetAdoption
-
-from django import forms
-from .models import PetAdoption  # Updated to reflect the new model name
 
 class PetAdoptionForm(forms.ModelForm):
     class Meta:

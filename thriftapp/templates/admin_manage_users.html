@@ -1,0 +1,42 @@
+{% extends "base2.html" %}
+{% block content %}
+<div class="container my-5">
+  <h2 class="text-center mb-4" style="font-family: Georgia, serif; font-weight: bold;">Manage Users</h2>
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <form method="POST">
+            {% csrf_token %}
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <select name="role_id" class="form-select">
+                {% for role in roles %}
+                  <option value="{{ role.role_id }}" {% if user.role == role %}selected{% endif %}>
+                    {{ role.role_name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <input type="hidden" name="user_id" value="{{ user.web_user_id }}">
+              <button type="submit" class="btn btn-warning btn-sm">Update</button>
+            </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

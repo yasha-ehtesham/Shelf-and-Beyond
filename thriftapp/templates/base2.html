@@ -43,6 +43,21 @@
             <a href="{% url 'pet_adoption' %}">Pet Adoption</a>
             <a href="{% url 'show_adoption_listings' %}">Pet Adoption Listings</a>
             <a href="{% url 'manage_adoption_listings' %}">Manage Adoption Listings</a>
+
+            <div class="dropdown">
+                <a href="#" class="category-link">Category ▾</a>
+            </div>
+            <a href="#">Genre</a>
+            <a href="#">Authors</a>
+            <a href="#">Bestsellers</a>
+
+            {% if request.user.is_superuser %}
+                <a href="{% url 'admin_notifications' %}">System Alerts</a>
+                <a href="{% url 'manage_users' %}">Manage Users</a>
+            {% elif request.session.user_id %}
+                <a href="{% url 'notifications' %}">Notifications</a>
+                <a href="{% url 'view_profile' %}">Profile</a>
+            {% endif %}
         </nav>
     </header>
 

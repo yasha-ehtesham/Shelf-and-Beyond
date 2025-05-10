@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='role',
             name='role_name',
-            field=models.CharField(choices=[('normal_user', 'Normal User'), ('admin', 'Admin')], max_length=20),
+            field=models.CharField(
+                choices=[('normal_user', 'Normal User'), ('admin', 'Admin')],
+                max_length=20
+            ),
         ),
     ]

@@ -1,23 +1,21 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-
-
-
+# Role choices
 ROLE_NAME = {
     ("normal_user", "Normal User"), 
     ("admin", "Admin")
 }
 
 class Role(models.Model):
-    role_id = models.AutoField(primary_key = True)
-    role_name = models.CharField(max_length=20, choices = ROLE_NAME)
+    role_id = models.AutoField(primary_key=True)
+    role_name = models.CharField(max_length=20, choices=ROLE_NAME)
 
     def __str__(self):
         return self.role_name
-    
 
+
+# Gender options
 GENDER = [
     ('male', "Male"),
     ('female', 'Female'),
@@ -25,35 +23,32 @@ GENDER = [
     ('others', 'Others')
 ]
 
-#-------------------------
+
+# AdminProfile links to built-in Django User
 class AdminProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
 
-#-------------------------
 
+# Custom WebUser model
 class WebUser(models.Model):
     web_user_id = models.AutoField(primary_key=True)
-
-    #new - make migrations for this 
     username = models.CharField(max_length=20, unique=True)
-
     firstname = models.CharField(max_length=25)
     lastname = models.CharField(max_length=25)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=11, unique=True)
-    gender = models.CharField(max_length=20, choices= GENDER)
-
+    gender = models.CharField(max_length=20, choices=GENDER)
     password = models.CharField(max_length=10)
-    birthdate = models.DateField() #MM-DD-YYYY
+    birthdate = models.DateField()
     bio = models.TextField(blank=True, null=True)
-
-    #foreign key
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return f"{self.firstname} {self.lastname}: {self.email}"
-    
+
+
+# Book listing info
 BOOK_CONDITIONS = [
     ('brand_new', 'Brand New'),
     ('almost_new', 'Almost New'),
@@ -76,32 +71,27 @@ class Listing(models.Model):
     condition = models.CharField(max_length=20, choices=BOOK_CONDITIONS)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     listing_time = models.DateTimeField(auto_now_add=True)
-
-    # Seller FK
-    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)  
-
-    # New 'is_deleted' field with a default value of False
-    is_deleted = models.BooleanField(default=False) 
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.title} - {self.status}"
 
 
+# Review model
 class Review(models.Model):
     review_id = models.AutoField(primary_key=True)
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='reviews')
     reviewer = models.ForeignKey(WebUser, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField()  # 1 to 5
+    rating = models.PositiveIntegerField()
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Review by {self.reviewer} - {self.rating}/5"
-    
-
-#new model created by yasha to track purachase history 
 
 
+# Purchase-related models
 class PurchaseGroup(models.Model):
     buyer = models.ForeignKey(WebUser, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -109,11 +99,12 @@ class PurchaseGroup(models.Model):
     def total_price(self):
         return sum(p.listing.price for p in self.purchase_set.all())
 
+
 class Purchase(models.Model):
     purchase_id = models.AutoField(primary_key=True)
-    buyer = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='purchases') #buyer id
+    buyer = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='purchases')
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
-    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='sales') #seller id
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='sales')
     purchase_date = models.DateTimeField(auto_now_add=True)
     STATUS_CHOICES = [
         ('CONFIRMED', 'Confirmed'),
@@ -125,6 +116,28 @@ class Purchase(models.Model):
     purchase_group = models.ForeignKey(PurchaseGroup, null=True, blank=True, on_delete=models.CASCADE)
 
 
+# From samin-branch
+class ExternalBookSource(models.Model):
+    source_id = models.AutoField(primary_key=True)
+    listing = models.ForeignKey('Listing', on_delete=models.CASCADE, related_name='external_sources')
+    source_name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    url = models.URLField()
+
+    def __str__(self):
+        return f"{self.source_name} - {self.price}"
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"To: {self.recipient.username} - {self.message[:30]}"
+
+
 class Inbox(models.Model):
     sender = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(WebUser, on_delete=models.CASCADE, related_name='received_messages')
@@ -134,11 +147,10 @@ class Inbox(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
-    
-from django.db import models
+
 
 class PetAdoption(models.Model):
-    listing_id = models.AutoField(primary_key=True)  # Serial number for the listing
+    listing_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
     age = models.PositiveIntegerField()
@@ -146,12 +158,12 @@ class PetAdoption(models.Model):
     potty_trained = models.BooleanField()
     breed = models.CharField(max_length=100)
     gender = models.CharField(max_length=6, choices=[('male', 'Male'), ('female', 'Female')])
-    seller = models.ForeignKey('WebUser', on_delete=models.CASCADE)  # Link to the user (adopter)
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, default='available')
-    image = models.ImageField(upload_to='pet_images/', null=True, blank=True)  # Added image field
+    image = models.ImageField(upload_to='pet_images/', null=True, blank=True)
 
     class Meta:
-        db_table = 'petadoptiondb'  # Custom table name
+        db_table = 'petadoptiondb'
 
     def __str__(self):
         return self.title

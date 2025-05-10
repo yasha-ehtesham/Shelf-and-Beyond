@@ -20,9 +20,14 @@
 
     <br><br>
 
-    <div class="list-buttons">
-        <form action="{% url 'view_all_webusers' %}" method="get">
-            <button type="submit" class="all_webusers">View all Users</button>
+    <div class="list-buttons mt-4">
+        <!-- Combined useful buttons -->
+        <a href="{% url 'manage_users' %}"><button class="btn btn-dark">Manage Users</button></a>
+        <a href="{% url 'admin_notifications' %}"><button class="btn btn-danger">System Notifications</button></a>
+        <a href="{% url 'show_listings' %}"><button class="btn btn-secondary">View All Listings</button></a>
+
+        <form action="{% url 'view_all_webusers' %}" method="get" style="display:inline;">
+            <button type="submit" class="all_webusers btn btn-outline-secondary">View All Users</button>
         </form>
     </div>
 </div>
