@@ -4,29 +4,31 @@
 <div class="centered-content">
     <h1>Welcome, Admin {{ request.user.username }}!</h1>
     <h2>Admin Dashboard</h2>
-    <br>
-    <br>
-    
-    <ul>
-        <li><strong>Total Books Listed:</strong> {{ total_books_listed }}</li>
-        <li><strong>Total Books Sold:</strong> {{ total_books_sold }}</li>
-        <li><strong>Total Revenue:</strong> {{ total_revenue|floatformat:2 }} BDT</li>
-        <li><strong>System Earnings:</strong> {{ system_earnings|floatformat:2 }} BDT</li>
-    </ul>
-    <br>
-    <br>
+
+    <br><br>
+
+    <div class="cart-text-box">
+        <div class="cart-text-container">
+            <ul>
+                <li><strong>Total Books Listed on the website:</strong> {{ total_books_listed }}</li>
+                <li><strong>Total Books Sold on the website:</strong> {{ total_books_sold }}</li>
+                <li><strong>Total Revenue:</strong> {{ total_revenue|floatformat:2 }} BDT</li>
+                <li><strong>System Earnings:</strong> {{ system_earnings|floatformat:2 }} BDT</li>
+            </ul>
+        </div>
+    </div>
+
+    <br><br>
+
     <div class="list-buttons mt-4">
-        <!--samin added-->
+        <!-- Combined useful buttons -->
         <a href="{% url 'manage_users' %}"><button class="btn btn-dark">Manage Users</button></a>
         <a href="{% url 'admin_notifications' %}"><button class="btn btn-danger">System Notifications</button></a>
         <a href="{% url 'show_listings' %}"><button class="btn btn-secondary">View All Listings</button></a>
-    </div>
-        <form action="{% url 'view_all_webusers' %}" method="get">
-            <button type="submit" class="all_webusers">View all Users</button>
-        </form>
-        <!-- a get request is submitted to go to this page -->
-    </div>
 
+        <form action="{% url 'view_all_webusers' %}" method="get" style="display:inline;">
+            <button type="submit" class="all_webusers btn btn-outline-secondary">View All Users</button>
+        </form>
+    </div>
 </div>
 {% endblock %}
- 

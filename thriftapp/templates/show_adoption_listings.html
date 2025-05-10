@@ -1,57 +1,43 @@
-<!-- final html show_listings -->
-
-
-
-
 {% extends "base2.html" %}
 {% load static %}
 
 {% block content %}
 <div class="centered-content">
-    <h1>All Listings</h1>
+    <h1>All Pet Adoption Listings</h1>
 
-    <br>
-    <br>
-    <br>
+    <br><br><br>
 
     {% if page_obj %}
         <div class="listings-container">
             {% for listing in page_obj %}
                 <div class="listing-card">
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+                   
+                    {% if listing.image %}
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+                    {% endif %}
+
                     <p class="book-title">{{ listing.title }}</p>
 
-                    <p><strong>Price:</strong> {{ listing.price }} BDT</p>
+
+                    <p><strong>Age:</strong> {{ listing.age }} years</p>
+                    <p><strong>Breed:</strong> {{ listing.breed }}</p>
                     <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
-                    
 
                     <div class="list-buttons">
-                        <form action="{% url 'details_listing' %}" method="get">
+                        <form action="{% url 'details_adoption_listing' %}" method="get">
                             <input type="hidden" name="listing_id" value="{{ listing.listing_id }}"> 
                             <button type="submit" class="details_listing">View Details</button>
                         </form>
-                        <br>
-
-                        {% if request.user.is_superuser %}
-                        <form action="{% url 'admin_delete_listing' listing.listing_id %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="admin_delete_listing">Delete</button>
-                        </form>
-                        {% endif %}
-                        
-            
                     </div>
                 </div>
             {% empty %}
-                <p>No listings available at the moment.</p>
+                <p>No adoption listings available at the moment.</p>
             {% endfor %}
         </div>
 
-        <br>
-        <br>
-        <br>
+        <br><br><br>
 
-        <!-- Pagination Controls -->
+
         <div class="pagination">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
@@ -71,8 +57,7 @@
         </div>
 
     {% else %}
-        <p>No listings available at the moment.</p>
+        <p>No adoption listings available at the moment.</p>
     {% endif %}
 </div>
 {% endblock %}
-

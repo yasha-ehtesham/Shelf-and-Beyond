@@ -13,36 +13,36 @@
         <div class="navbar">
             <div class="logo">Shelf and Beyond</div>
             <div class="search-container">
-                <input type="text" placeholder="Search by book name or author name">
-                <button class="search-btn">🔍</button>
-
+                <form action="{% url 'search_results' %}" method="GET">
+                    <input type="text" name="q" placeholder="Search by book name or author name" value="{{ query|default_if_none:'' }}">
+                    <button type="submit" class="search-btn">🔍</button>
+                </form>
                 <a href="{% url 'view_cart' %}">
                     <button type="button" class="cart-btn">🛒</button>
                 </a>
-
             </div>
+
             <div class="auth-buttons">
                 {% if request.session.user_id %}
-                    <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
-                    
-                    <form action="{% url 'create_listing' %}" method="get">
-                        <button type="submit" class="create_listing">CREATE LISTING</button>
-                    </form>
-
+                    <a href="{% url 'create_listing' %}"><button class="btn primary">CREATE LISTING</button></a>
+                    <a href="{% url 'logout' %}"><button class="btn danger">LOG OUT</button></a>
                 {% elif request.user.is_superuser %}
-                    <a href="{% url 'logout' %}"><button class="logout">LOG OUT</button></a>
-
-
+                    <a href="{% url 'logout' %}"><button class="btn danger">LOG OUT</button></a>
                 {% else %}
-                    <a href="{% url 'login_step' %}"><button class="login">LOG IN</button></a>
-                    <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
+                    <a href="{% url 'login_step' %}"><button class="btn">LOG IN</button></a>
+                    <a href="{% url 'signup_step1' %}"><button class="btn">SIGN UP</button></a>
                 {% endif %}
             </div>
-
-
         </div>
+
         <nav class="nav-links">
             <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% elif request.user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
+            <a href="{% url 'show_message' %}">Inbox</a>
+            <a href="{% url 'manage_listings' %}">My Listings</a>
+            <a href="{% url 'show_listings' %}">All Listings</a>
+            <a href="{% url 'pet_adoption' %}">Pet Adoption</a>
+            <a href="{% url 'show_adoption_listings' %}">Pet Adoption Listings</a>
+            <a href="{% url 'manage_adoption_listings' %}">Manage Adoption Listings</a>
 
             <div class="dropdown">
                 <a href="#" class="category-link">Category ▾</a>
@@ -50,25 +50,24 @@
             <a href="#">Genre</a>
             <a href="#">Authors</a>
             <a href="#">Bestsellers</a>
-            <a href="{% url 'show_listings' %}">All Listings</a>
+
             {% if request.user.is_superuser %}
-            <a href="{% url 'admin_notifications' %}">System Alerts</a>
-            <a href="{% url 'manage_users' %}">Manage Users</a>
-            
+                <a href="{% url 'admin_notifications' %}">System Alerts</a>
+                <a href="{% url 'manage_users' %}">Manage Users</a>
             {% elif request.session.user_id %}
                 <a href="{% url 'notifications' %}">Notifications</a>
                 <a href="{% url 'view_profile' %}">Profile</a>
             {% endif %}
-          
-
         </nav>
     </header>
 
     <main>
         <div class="book-background">
-            {% block content %}{% endblock %}
+            <div class="overlay"></div>
+            <div class="content-container">
+                {% block content %}{% endblock %}
+            </div>
         </div>
     </main>
 </body>
 </html>
-

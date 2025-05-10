@@ -1,20 +1,34 @@
 {% extends "base2.html" %}
 {% block content %}
-<h2>Purchase History</h2>
 
-{% for group in groups %}
-    <div style="margin-bottom: 1em;">
-        <p><strong>Date:</strong> {{ group.timestamp }}</p>
-        <ul>
-        {% for purchase in group.purchase_set.all %}
-            <li>{{ purchase.listing.title }} - {{ purchase.listing.price }} BDT</li>
-        {% endfor %}
-        </ul>
-        <p><strong>Total:</strong> {{ group.total_price }} BDT</p>
-        <hr>
+<div class="centered-content">
+    <h2>Your Purchase History</h2>
+
+    <div class="cart-text-box">
+        <div class="cart-text-container">
+
+            {% for group in groups %}
+                <div style="margin-bottom: 1.5em;">
+                    <p><strong>Date:</strong> {{ group.timestamp }}</p>
+                    <ol>
+                        {% for purchase in group.purchase_set.all %}
+                            <li>{{ purchase.listing.title }} - {{ purchase.listing.price }} BDT</li>
+                        {% endfor %}
+                    </ol>
+                    <p><strong>Total:</strong> {{ group.total_price }} BDT</p>
+                    <hr>
+                </div>
+            {% empty %}
+                <p>No purchases yet.</p>
+            {% endfor %}
+
+            <br>
+            <a href="{% url 'view_cart' %}" style="color: black; text-decoration: underline; font-weight: bold; font-family: 'Georgia', serif;">
+                Back to Cart
+            </a>
+
+        </div>
     </div>
-{% empty %}
-    <p>No purchases yet.</p>
-{% endfor %}
-<a href="{% url 'view_cart' %}">Back to Cart</a>
+</div>
+
 {% endblock %}

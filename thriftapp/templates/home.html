@@ -1,15 +1,13 @@
-<!-- user dashboard -->
-
 {% extends "base2.html" %}
+{% load static %}
 
 {% block content %}
 <div class="centered-content">
     <h1>Welcome, {{ user.firstname }} {{ user.lastname }}</h1>
 
-    {% if request.session.user_id %} 
+    {% if request.session.user_id %}
         <br>
         <div class="list-buttons">
-           
             <a href="{% url 'show_listings' %}"><button class="btn btn-secondary">BROWSE BOOKS</button></a>
             <a href="{% url 'view_purchase_history' %}"><button class="btn btn-success">PURCHASE HISTORY</button></a>
 
@@ -21,8 +19,23 @@
                     <button class="btn btn-outline-secondary">COMPARE PRICES</button>
                 </a>
             </div>
+
+            <br>
+            <form action="{% url 'interaction_history' %}" method="get">
+                <button type="submit" class="btn btn-outline-info">VIEW ALL HISTORY</button>
+            </form>
+            <br>
+            <form action="{% url 'stats_and_transactions' %}" method="get">
+                <button type="submit" class="btn btn-outline-warning">VIEW ALL STATS AND TRANSACTIONS</button>
+            </form>
+            <br>
+            <form action="{% url 'pet_adoption' %}" method="get">
+                <button type="submit" class="btn btn-outline-success">CREATE ADOPTION LISTING</button>
+            </form>
         </div>
         <br>
+    {% else %}
+        <p>Please log in to view your dashboard.</p>
     {% endif %}
 </div>
 {% endblock %}
