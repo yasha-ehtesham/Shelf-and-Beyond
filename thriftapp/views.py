@@ -547,25 +547,18 @@ def manage_users(request):
 
 @session_user_required
 def view_profile(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You are not logged in. Please log in.")
+        return redirect('login_step')
+
     try:
-        # ✅ Prefer request.user if available, fallback to session
-        user = request.user
-        if isinstance(user, AnonymousUser) or not user.is_authenticated:
-            raise WebUser.DoesNotExist
-    except:
-        # fallback (if needed)
-        user_id = request.session.get('user_id')
-        if not user_id:
-            messages.error(request, "You are not logged in. Please log in.")
-            return redirect('login_step')
-        try:
-            user = WebUser.objects.get(pk=user_id)
-        except WebUser.DoesNotExist:
-            messages.error(request, "User not found.")
-            return redirect('login_step')
+        user = WebUser.objects.get(pk=user_id)
+    except WebUser.DoesNotExist:
+        messages.error(request, "User not found.")
+        return redirect('login_step')
 
     return render(request, 'view_profile.html', {'user': user})
-
 
 # M2 F3 
 @session_user_required
