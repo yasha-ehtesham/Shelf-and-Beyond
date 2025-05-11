@@ -43,6 +43,11 @@
             {% if request.user.is_superuser %}
             <a href="{% url 'admin_notifications' %}">System Alerts</a>
             <a href="{% url 'manage_users' %}">Manage Users</a>
+            <a href="{% url 'show_message' %}">Inbox</a>
+            <a href="{% url 'manage_listings' %}">My Listings</a>
+            <a href="{% url 'show_listings' %}">All Listings</a>
+            <a href="{% url 'show_adoption_listings' %}">All Adoption Listings</a>
+            <a href="{% url 'manage_adoption_listings' %}">Manage Adoption Listings</a>
             
             {% elif request.session.user_id %}
                 <a href="{% url 'notifications' %}">Notifications</a>
