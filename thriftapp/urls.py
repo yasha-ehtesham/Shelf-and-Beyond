@@ -51,6 +51,7 @@ urlpatterns = [
     path('message_show/', views.show_message, name='show_message'),
 
     # Profile
+    path('view_all_webusers/', views.view_all_webusers, name='view_all_webusers'),
     path('profile/', views.view_profile, name='view_profile'),
     path('profile/edit/', views.update_profile, name='update_profile'),
 
