@@ -1,31 +1,29 @@
-from django.shortcuts import render
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import SignupForm1, SignupForm2, WebUserUpdateForm
-from .forms import ListingForm, ReviewForm
-from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.messages import get_messages
-from .models import Notification
-
-import requests
+from django.db.models import Q, Sum
+from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-
 from django.conf import settings
-
+from functools import wraps
 import os
+import stripe
+import requests
 from dotenv import load_dotenv
 
-from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Sum
-from decimal import Decimal
-from functools import wraps
+from .forms import SignupForm1,SignupForm2, ListingForm, ReviewForm, InboxForm, PetAdoptionForm, WebUserUpdateForm
+from .models import WebUser, Role, AdminProfile,Listing, Review, Purchase, PurchaseGroup, Inbox, Notification, PetAdoption
 
-#check for request.session['user_id'] 
+# Load environment variables
+load_dotenv()
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
+NYT_API_KEY = os.getenv('NYT_API_KEY')
+
+# Custom decorator to check for session-based WebUser login
 def session_user_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -35,13 +33,159 @@ def session_user_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-load_dotenv()  # Load variables from .env
-
-GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
-NYT_API_KEY = os.getenv('NYT_API_KEY')
-
 
 # Create your views here.
+#------------------------------------------------------------------------
+
+
+@csrf_exempt
+def checkout(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+    
+    # Generate line_items for Stripe
+    line_items = []
+    for item in listings:
+        line_items.append({
+            'price_data': {
+                'currency': 'bdt',
+                'unit_amount': int(item.price) * 100,  # Stripe uses smallest currency unit
+                'product_data': {
+                    'name': item.title,
+                },
+            },
+            'quantity': 1,
+        })
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url=request.build_absolute_uri('/checkout/success/'),
+        cancel_url=request.build_absolute_uri('/checkout/cancel/'),
+    )
+
+    return redirect(session.url, code=303)
+
+def checkout_success(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    if not cart:
+        return render(request, "checkout_success.html", {
+            'message': "Your cart was already empty or purchases were already confirmed."
+        })
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'
+            listing.save()
+
+    # Clear cart
+    request.session['cart'] = []
+
+    return render(request, "checkout_success.html", {
+        'message': "Payment successful! Your purchases have been confirmed."
+    })
+
+
+def checkout_cancel(request):
+    return render(request, "checkout_cancel.html")
+
+
+
+#-----------------------------------------------------------------------
+
+
+@login_required
+def admin_delete_listing(request, listing_id):
+    # Ensure that only admins can delete
+    if not request.user.is_superuser:
+        return redirect('show_listings')  # Redirect if not an admin
+    
+    listing = get_object_or_404(Listing, pk=listing_id)
+
+    
+    listing.is_deleted = True
+    listing.save()
+
+    
+
+    return redirect('show_listings')  # Redirect back to the listings page
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_view_interaction_history(request, user_id):
+    user = get_object_or_404(WebUser, pk=user_id)
+
+    listings_created = Listing.objects.filter(seller=user)
+    books_sold = Purchase.objects.filter(seller=user).select_related('buyer', 'listing')
+    books_bought = Purchase.objects.filter(buyer=user).select_related('seller', 'listing')
+
+    context = {
+        'target_user': user,
+        'listings_created': listings_created,
+        'books_sold': books_sold,
+        'books_bought': books_bought,
+    }
+    return render(request, 'admin_view_interaction_history.html', context)
+
+
+
+
+def interaction_history(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+      return redirect('login_step') 
+    
+    user = WebUser.objects.get(pk=web_user_id)
+
+    # Listings created by the user
+    listings_created = Listing.objects.filter(seller=user)
+
+    # Books sold by the user (others bought from this user)
+    books_sold = Purchase.objects.filter(seller=user).select_related('buyer', 'listing')
+
+    # Books bought by the user (this user bought from others)
+    books_bought = Purchase.objects.filter(buyer=user).select_related('seller', 'listing')
+
+    context = {
+        'listings_created': listings_created,
+        'books_sold': books_sold,
+        'books_bought': books_bought,
+    }
+    return render(request, 'interaction_history.html', context)
+
+
+
+
+
+
 #-------------------------------------------------------------------------
 @user_passes_test(lambda u: u.is_superuser)
 def view_all_webusers(request):
@@ -109,61 +253,9 @@ def view_cart(request):
     })
 
 
-def confirm_all_purchases(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
-
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
-    cart = request.session.get('cart', [])
-    if not cart:
-        return redirect('view_cart')
-
-    listings = Listing.objects.filter(listing_id__in=cart)
-
-    # Create a new group for this checkout session
-    group = PurchaseGroup.objects.create(buyer=web_user)
-
-    for listing in listings:
-        # Avoid double-purchasing
-        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
-            Purchase.objects.create(
-                buyer=web_user,
-                listing=listing,
-                seller=listing.seller,
-                purchase_group=group
-            )
-            listing.status = 'sold'  # 👈 mark as sold
-            listing.save()
-
-    # Clear cart after successful grouped purchase
-    request.session['cart'] = []
-
-    return redirect('view_purchase_history')
 
 
 
-def view_total_bill(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
-
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
-
-    cart = request.session.get('cart', [])
-    # Only consider purchases that are:
-    # - in the cart
-    # - confirmed (exist in Purchase model for this user)
-    purchases = Purchase.objects.filter(
-        buyer=web_user,
-        listing__listing_id__in=cart
-    )
-
-    total_bill = sum(purchase.listing.price for purchase in purchases)
-
-    return render(request, "view_total_bill.html", {
-        'total_bill': total_bill
-    })
 
 
 def view_purchase_history(request):
@@ -195,7 +287,8 @@ def remove_from_cart(request):
 
 
 def show_listings(request):
-    listings = Listing.objects.all()   
+
+    listings = Listing.objects.filter(is_deleted=False)  # Only show listings that are not deleted 
 
     paginator = Paginator(listings, 4)  # Show 4 listings per page (adjust as needed)
     page_number = request.GET.get('page')
@@ -251,17 +344,8 @@ def details_listing(request):
 
     return render(request, 'details_listing.html', {'listing': listing, 'summary': summary})
 
-
-
-def send_message(request):
-    return render(request, 'send_message.html')
-
-
 def show_one_review(request):
     return render(request, 'show_one_review.html')
-
-
-
 
 #User -> Form -> Django View -> NYT API -> JSON -> Django View -> Template -> User sees Results
 
@@ -353,16 +437,6 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 def home(request):
     return render(request, "homepage.html", {})
-
-def welcome_page(request): #login view
-    if 'user_id' not in request.session:
-        return redirect('login_step')
-
-    user = WebUser.objects.get(pk=request.session['user_id'])
-
-    # request.session['web_user_id'] = user.web_user_id
-    return render(request, "home.html", {'user': user})
-
 
 def login_step(request):
     storage = get_messages(request)
@@ -512,6 +586,230 @@ def manage_listings(request):
     # Render the page with the listings context
     return render(request, 'manage_listings.html', {'listings': listings})
 
+
+
+#------------------------------------------------------------------------------------------
+
+def send_message(request, seller_id):
+    seller = WebUser.objects.get(web_user_id=seller_id)
+    buyer = WebUser.objects.get(pk=request.session['user_id'])
+    
+    if request.method == 'POST':
+        form = InboxForm(request.POST)
+        print(form.is_valid())
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = buyer
+            message.receiver = seller
+            message.save()
+            return redirect('welcome_page')
+    else:
+        form = InboxForm(initial={'receiver': seller})
+
+    return render(request, 'send_message.html', {'form': form, 'seller': seller})
+
+
+def show_message(request):
+    user = WebUser.objects.get(pk=request.session['user_id'])
+    
+    messages = Inbox.objects.filter(
+        Q(sender=user) | Q(receiver=user)
+    ).order_by('-timestamp')
+    
+    return render(request, 'show_message.html', {'messages': messages})
+
+def welcome_page(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+
+    user = WebUser.objects.get(pk=request.session['user_id'])
+
+    # Metrics
+    total_books_listed = Listing.objects.filter(seller=user).count()
+    books_sold = Purchase.objects.filter(seller=user, status='DELIVERED').count()
+    books_purchased = Purchase.objects.filter(buyer=user).count()
+    earnings = Purchase.objects.filter(seller=user, status='DELIVERED').aggregate(
+        total_earnings=Sum('listing__price')
+    )['total_earnings'] or 0
+
+    # Transactions
+    pending_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='CONFIRMED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    active_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='SHIPPED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    completed_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='DELIVERED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+
+    context = {
+        'user': user,
+        'total_books_listed': total_books_listed,
+        'books_sold': books_sold,
+        'books_purchased': books_purchased,
+        'earnings': earnings,
+        'pending_transactions': pending_transactions,
+        'active_transactions': active_transactions,
+        'completed_transactions': completed_transactions,
+    }
+
+    # request.session['web_user_id'] = user.web_user_id
+    return render(request, "home.html", context)
+
+from django.contrib import messages
+from .models import WebUser, PetAdoption  # Updated to reflect the new model name
+from .forms import PetAdoptionForm  # Updated to reflect the new form
+
+def pet_adoption(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')  # User must be logged in
+
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
+
+    if request.method == 'POST':  # When form is filled
+        form = PetAdoptionForm(request.POST, request.FILES)
+        if form.is_valid():
+            listing = form.save(commit=False)
+            listing.seller = user  # Connect to logged-in user
+            listing.status = 'available'  # Manually set status
+
+            # Save the image if uploaded
+            if 'image' in request.FILES:
+                listing.image = request.FILES['image']  # Save uploaded image
+            listing.save()  # Save to database
+            messages.success(request, "Pet listing created successfully!")
+            return redirect('pet_adoption')  # Redirect after success
+        else:
+            print("Form errors:", form.errors.as_json())
+            messages.error(request, "Form is not valid.")
+    else:  # For GET request
+        print("Page opened and form is empty")
+        form = PetAdoptionForm()  # Empty form
+
+    return render(request, 'pet_adoption.html', {'form': form})
+
+from django.core.paginator import Paginator
+from .models import PetAdoption  # Ensure you import the PetAdoption model
+
+def show_adoption_listings(request):
+    # Query PetAdoption objects instead of Listing
+    pet_adoptions = PetAdoption.objects.all()   
+
+    paginator = Paginator(pet_adoptions, 4)  # Show 4 listings per page (adjust as needed)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj
+    }
+    return render(request, "show_adoption_listings.html", context)
+
+from .models import PetAdoption
+
+def pet_adoption_details(request):
+    listing_id = request.GET.get('listing_id')
+    listing = get_object_or_404(PetAdoption, listing_id=listing_id)
+    context = {
+        'listing': listing
+    }
+    return render(request, 'pet_adoption_details.html', context)
+
+
+
+from django.http import HttpResponse
+from .models import PetAdoption
+from .forms import PetAdoptionForm
+
+def manage_adoption_listings(request):
+    user = WebUser.objects.get(pk=request.session['user_id'])
+    pet_adoptions = PetAdoption.objects.filter(seller=user)
+
+    if request.method == 'POST':
+        listing_id = request.POST.get('listing_id')
+        action = request.POST.get('action')
+        try:
+            listing = PetAdoption.objects.get(id=listing_id)
+            if action == 'adopted':
+                listing.status = 'Adopted'
+            elif action == 'cancelled':
+                listing.status = 'Cancelled'
+            listing.save()
+        except PetAdoption.DoesNotExist:
+            return HttpResponse("Listing not found.")
+        return redirect('manage_adoption_listings')
+
+    return render(request, 'manage_adoption_listings.html', {'pet_adoptions': pet_adoptions})
+
+def search_results(request):
+    query = request.GET.get('q', '')
+    listings = []
+    purchases = []
+    
+    if query:
+        # Search listings (books)
+        listings = Listing.objects.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(description__icontains=query)
+        ).select_related('seller')
+        
+        # Search purchases (orders) - only for logged-in users
+        if request.user.is_authenticated:
+            purchases = Purchase.objects.filter(
+                Q(listing__title__icontains=query) |
+                Q(listing__author__icontains=query),
+                buyer__user=request.user
+            ).select_related('listing', 'buyer', 'seller')
+    
+    context = {
+        'query': query,
+        'listings': listings,
+        'purchases': purchases,
+    }
+    return render(request, 'search_results.html', context)
+
+
+
+def stats_and_transactions_view(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return render(request, 'login_required.html')  # or redirect to login
+
+    user = get_object_or_404(WebUser, pk=user_id)
+
+    # Metrics
+    total_books_listed = Listing.objects.filter(seller=user).count()
+    books_sold = Purchase.objects.filter(seller=user, status='DELIVERED').count()
+    books_purchased = Purchase.objects.filter(buyer=user).count()
+    earnings = Purchase.objects.filter(seller=user, status='DELIVERED').aggregate(
+        total_earnings=Sum('listing__price')
+    )['total_earnings'] or 0
+
+    # Transactions
+    pending_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='CONFIRMED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    active_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='SHIPPED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    completed_transactions = Purchase.objects.filter(
+        Q(buyer=user) | Q(seller=user), status='DELIVERED'
+    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+
+    context = {
+        'user': user,
+        'total_books_listed': total_books_listed,
+        'books_sold': books_sold,
+        'books_purchased': books_purchased,
+        'earnings': earnings,
+        'pending_transactions': pending_transactions,
+        'active_transactions': active_transactions,
+        'completed_transactions': completed_transactions,
+    }
+
+    return render(request, 'stats_and_trans.html', context)
+
 #------------------------------------------------------------------------------------------
 #Samin's views
 ##M1 F2&3 
@@ -628,3 +926,64 @@ def admin_notifications(request):
 
    # notifications = Notification.objects.filter(recipient=user).order_by('-created_at')
     #return render(request, 'admin_notifications.html', {'notifications': notifications})
+
+
+
+# ---- Functions merged from views (1).py ----
+
+def confirm_all_purchases(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'  # 👈 mark as sold
+            listing.save()
+
+    # Clear cart after successful grouped purchase
+    request.session['cart'] = []
+
+    return redirect('view_purchase_history')
+
+
+
+def view_total_bill(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    # Only consider purchases that are:
+    # - in the cart
+    # - confirmed (exist in Purchase model for this user)
+    purchases = Purchase.objects.filter(
+        buyer=web_user,
+        listing__listing_id__in=cart
+    )
+
+    total_bill = sum(purchase.listing.price for purchase in purchases)
+
+    return render(request, "view_total_bill.html", {
+        'total_bill': total_bill
+    })
+
