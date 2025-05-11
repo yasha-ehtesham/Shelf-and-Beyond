@@ -9,6 +9,8 @@ urlpatterns = [
     path('admin/manage_users/', views.manage_users, name='manage_users'),
     path('admin_notifications/', views.admin_notifications, name='admin_notifications'),
 
+    path('notifications/', views.user_notifications, name='notifications'),
+
     # Auth and landing
     path('login/', views.login_step, name='login_step'),
     path('signup/', views.signup_step1, name='signup_step1'),
