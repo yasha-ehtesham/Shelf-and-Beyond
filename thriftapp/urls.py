@@ -26,6 +26,11 @@ urlpatterns = [
     path('search_reviews', views.search_reviews, name='search_reviews'),
     path('compare_prices/', views.compare_prices, name='compare_prices'),
 
+    # Listings CRUD
+    path('listing/<int:listing_id>/delete/', views.admin_delete_listing, name='admin_delete_listing'),
+    path('listing/create/', views.create_listing, name='create_listing'),
+    path('manage_listings/', views.manage_listings, name='manage_listings'),
+
     # Cart and Checkout
     path('add_to_cart/', views.add_to_cart, name='add_to_cart'),
     path('view_cart/', views.view_cart, name='view_cart'),
@@ -48,6 +53,10 @@ urlpatterns = [
     # Profile
     path('profile/', views.view_profile, name='view_profile'),
     path('profile/edit/', views.update_profile, name='update_profile'),
+
+        # Search
+    path('search/', views.search_results, name='search_results'),
+
 
     # Pet Adoption
     path('pet_adoption/', views.pet_adoption, name='pet_adoption'),
