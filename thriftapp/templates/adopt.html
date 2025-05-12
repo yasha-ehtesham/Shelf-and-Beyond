@@ -1,0 +1,17 @@
+{% extends "base2.html" %}
+
+
+{% block content %}
+<div class = "centered-content">
+    <h2>Adopted successfully </h2>
+    <div class="list-buttons">
+        <form action="{% url 'show_adoption_listings' %}" method="get">
+            <button type="submit" class="show_adoption_listings">BACK TO ADOPTION LISTINGS</button>
+        </form>
+        <br>
+        
+
+    </div>
+
+</div>
+{% endblock %}

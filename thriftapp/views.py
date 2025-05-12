@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import SignupForm1, SignupForm2
 from .forms import ListingForm, ReviewForm, InboxForm
-from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup, Inbox
+from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup, Inbox, AdoptionGroup
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Max
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.messages import get_messages
+from django.db.models import Q, Max
+
 
 import requests
 from django.core.paginator import Paginator
@@ -590,33 +592,124 @@ def manage_listings(request):
 
 #------------------------------------------------------------------------------------------
 
+from django.shortcuts import render, redirect
+from django.db.models import Q, Max
+from .models import WebUser, Inbox
+from .forms import InboxForm
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
 def send_message(request, seller_id):
-    seller = WebUser.objects.get(web_user_id=seller_id)
-    buyer = WebUser.objects.get(pk=request.session['user_id'])
-    
+    try:
+        seller = WebUser.objects.get(web_user_id=seller_id)
+        buyer = WebUser.objects.get(pk=request.session['user_id'])
+    except WebUser.DoesNotExist:
+        logger.error("User not found: seller_id=%s, user_id=%s", seller_id, request.session.get('user_id'))
+        return render(request, 'send_message.html', {'error': "User not found."})
+
+    # Prevent sending messages to self
+    if seller == buyer:
+        logger.info("Self-messaging attempt by user: %s", buyer.username)
+        return render(request, 'send_message.html', {
+            'form': InboxForm(initial={'receiver': seller, 'sender_name': buyer.username}),
+            'seller': seller,
+            'error': "You cannot send a message to yourself."
+        })
+
     if request.method == 'POST':
         form = InboxForm(request.POST)
-        print(form.is_valid())
         if form.is_valid():
             message = form.save(commit=False)
             message.sender = buyer
             message.receiver = seller
+            message.sender_name = form.cleaned_data['sender_name'] or buyer.username
             message.save()
-            return redirect('welcome_page')
+            logger.info("Message sent from %s to %s: %s", buyer.username, seller.username, message.message)
+            return redirect('show_message')
+        else:
+            logger.error("Form validation failed in send_message: %s", form.errors.as_json())
     else:
-        form = InboxForm(initial={'receiver': seller})
+        form = InboxForm(initial={'receiver': seller, 'sender_name': buyer.username})
 
     return render(request, 'send_message.html', {'form': form, 'seller': seller})
 
-
 def show_message(request):
-    user = WebUser.objects.get(pk=request.session['user_id'])
-    
+    try:
+        user = WebUser.objects.get(pk=request.session['user_id'])
+    except WebUser.DoesNotExist:
+        logger.error("User not found: user_id=%s", request.session.get('user_id'))
+        return render(request, 'show_message.html', {'error': "User not found."})
+
+    # Get all messages where the user is either sender or receiver
     messages = Inbox.objects.filter(
         Q(sender=user) | Q(receiver=user)
     ).order_by('-timestamp')
-    
-    return render(request, 'show_message.html', {'messages': messages})
+
+    # Group messages by conversation (unique sender/receiver pairs)
+    conversations = []
+    seen_pairs = set()
+
+    for msg in messages:
+        other_user = msg.receiver if msg.sender == user else msg.sender
+        pair = tuple(sorted([user.web_user_id, other_user.web_user_id]))
+        if pair not in seen_pairs:
+            seen_pairs.add(pair)
+            # Get the latest message for this conversation
+            latest_message = Inbox.objects.filter(
+                Q(sender=user, receiver=other_user) | Q(sender=other_user, receiver=user)
+            ).order_by('-timestamp').first()
+            conversations.append({
+                'other_user': other_user,
+                'latest_message': latest_message,
+            })
+
+    return render(request, 'show_message.html', {'conversations': conversations})
+
+def view_conversation(request, other_user_id):
+    try:
+        user = WebUser.objects.get(pk=request.session['user_id'])
+        other_user = WebUser.objects.get(web_user_id=other_user_id)
+    except WebUser.DoesNotExist:
+        logger.error("User not found: user_id=%s, other_user_id=%s", request.session.get('user_id'), other_user_id)
+        return render(request, 'inbox.html', {'error': "User not found."})
+
+    # Prevent messaging self
+    if user == other_user:
+        logger.info("Self-messaging attempt by user: %s", user.username)
+        return render(request, 'inbox.html', {
+            'messages': [],
+            'other_user': other_user,
+            'form': InboxForm(initial={'receiver': other_user, 'sender_name': user.username}),
+            'error': "You cannot send a message to yourself."
+        })
+
+    # Get all messages between the user and other_user
+    messages = Inbox.objects.filter(
+        Q(sender=user, receiver=other_user) | Q(sender=other_user, receiver=user)
+    ).order_by('timestamp')
+
+    if request.method == 'POST':
+        form = InboxForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = user
+            message.receiver = other_user
+            message.sender_name = form.cleaned_data['sender_name'] or user.username
+            message.save()
+            logger.info("Reply sent from %s to %s: %s", user.username, other_user.username, message.message)
+            return redirect('view_conversation', other_user_id=other_user_id)
+        else:
+            logger.error("Form validation failed in view_conversation: %s", form.errors.as_json())
+    else:
+        form = InboxForm(initial={'receiver': other_user, 'sender_name': user.username})
+
+    return render(request, 'inbox.html', {
+        'messages': messages,
+        'other_user': other_user,
+        'form': form,
+    })
 
 def welcome_page(request):
     if 'user_id' not in request.session:
@@ -657,94 +750,206 @@ def welcome_page(request):
     # request.session['web_user_id'] = user.web_user_id
     return render(request, "home.html", context)
 
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import WebUser, PetAdoption  # Updated to reflect the new model name
-from .forms import PetAdoptionForm  # Updated to reflect the new form
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import user_passes_test
+from .models import WebUser, PetAdoption, AdoptionApplication
+from .forms import PetAdoptionForm, AdoptionApplicationForm
+from django.http import HttpResponse
+
+def is_admin(user):
+    return user.is_staff
 
 def pet_adoption(request):
     if 'user_id' not in request.session:
-        return redirect('login_step')  # User must be logged in
-
+        return redirect('login_step')
     user = get_object_or_404(WebUser, pk=request.session['user_id'])
-
-    if request.method == 'POST':  # When form is filled
+    if request.method == 'POST':
         form = PetAdoptionForm(request.POST, request.FILES)
         if form.is_valid():
             listing = form.save(commit=False)
-            listing.seller = user  # Connect to logged-in user
-            listing.status = 'available'  # Manually set status
-
-            # Save the image if uploaded
+            listing.seller = user
+            listing.status = 'available'
             if 'image' in request.FILES:
-                listing.image = request.FILES['image']  # Save uploaded image
-            listing.save()  # Save to database
+                listing.image = request.FILES['image']
+            listing.save()
             messages.success(request, "Pet listing created successfully!")
-            return redirect('pet_adoption')  # Redirect after success
+            return redirect('pet_adoption')
         else:
-            print("Form errors:", form.errors.as_json())
             messages.error(request, "Form is not valid.")
-    else:  # For GET request
-        print("Page opened and form is empty")
-        form = PetAdoptionForm()  # Empty form
-
+    else:
+        form = PetAdoptionForm()
     return render(request, 'pet_adoption.html', {'form': form})
 
-from django.core.paginator import Paginator
-from .models import PetAdoption  # Ensure you import the PetAdoption model
-
 def show_adoption_listings(request):
-    # Query PetAdoption objects instead of Listing
-    pet_adoptions = PetAdoption.objects.all()   
-
-    paginator = Paginator(pet_adoptions, 4)  # Show 4 listings per page (adjust as needed)
+    pet_adoptions = PetAdoption.objects.all()
+    paginator = Paginator(pet_adoptions, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj
-    }
-    return render(request, "show_adoption_listings.html", context)
-
-from .models import PetAdoption
+    return render(request, "show_adoption_listings.html", {'page_obj': page_obj})
 
 def pet_adoption_details(request):
     listing_id = request.GET.get('listing_id')
     listing = get_object_or_404(PetAdoption, listing_id=listing_id)
-    context = {
-        'listing': listing
-    }
-    return render(request, 'pet_adoption_details.html', context)
+    return render(request, 'pet_adoption_details.html', {'listing': listing})
 
+def adopt(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+    listing_id = request.GET.get('basket_item')
+    if listing_id:
+        basket = request.session.get('basket', [])
+        if listing_id not in basket:
+            basket.append(listing_id)
+            request.session['basket'] = basket
+            messages.success(request, "Pet added to your adoption basket!")
+        else:
+            messages.info(request, "This pet is already in your basket.")
+    return redirect('view_basket')
 
+def view_basket(request):
+    basket = request.session.get('basket', [])
+    listings = PetAdoption.objects.filter(listing_id__in=basket)
+    return render(request, 'view_basket.html', {'listings': listings})
+
+def remove_from_basket(request):
+    if request.method == 'POST':
+        listing_id = request.POST.get('listing_id')
+        basket = request.session.get('basket', [])
+        if listing_id and listing_id in basket:
+            basket.remove(listing_id)
+            request.session['basket'] = basket
+        return redirect('view_basket')
+    return redirect('view_basket')
+
+def adoption_checkout(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
+    basket = request.session.get('basket', [])
+    if not basket:
+        messages.error(request, "Your adoption basket is empty.")
+        return redirect('view_basket')
+    if request.method == 'POST':
+        form = AdoptionApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            group = AdoptionGroup.objects.create(applicant=user)
+            for listing_id in basket:
+                pet = get_object_or_404(PetAdoption, listing_id=listing_id)
+                if pet.status != 'available':
+                    messages.error(request, f"{pet.title} is no longer available.")
+                    continue
+                application = form.save(commit=False)
+                application.pet = pet
+                application.applicant = user
+                application.adoption_group = group
+                application.save()
+                pet.status = 'pending'
+                pet.save()
+            request.session['basket'] = []
+            messages.success(request, "Adoption application submitted successfully!")
+            return redirect('adopt_success')
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+    else:
+        form = AdoptionApplicationForm(initial={'name': user.username})
+    pets = PetAdoption.objects.filter(listing_id__in=basket)
+    return render(request, 'adoption_checkout.html', {'form': form, 'pets': pets})
+
+def adopt_success(request):
+    return render(request, 'adopt.html')
 
 def manage_adoption_listings(request):
-
-    user = WebUser.objects.get(pk=request.session['user_id'])
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
     pet_adoptions = PetAdoption.objects.filter(seller=user)
-
-
     if request.method == 'POST':
         listing_id = request.POST.get('listing_id')
         action = request.POST.get('action')
-
         try:
-
             listing = PetAdoption.objects.get(listing_id=listing_id)
-
-
             if action == 'adopted':
-                listing.status = 'Adopted'
+                listing.status = 'adopted'
             elif action == 'cancelled':
-                listing.status = 'Cancelled'
+                listing.status = 'cancelled'
             listing.save()
         except PetAdoption.DoesNotExist:
             return HttpResponse("Listing not found.")
-
-
         return redirect('manage_adoption_listings')
+    # Add pagination
+    paginator = Paginator(pet_adoptions, 4)  # 4 listings per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'manage_adoption_listings.html', {'page_obj': page_obj})
 
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import user_passes_test
+from .models import AdoptionApplication
+from .views import is_admin
 
-    return render(request, 'manage_adoption_listings.html', {'pet_adoptions': pet_adoptions})
+@user_passes_test(is_admin)
+def manage_adoption_applications(request):
+    applications = AdoptionApplication.objects.all()
+    paginator = Paginator(applications, 4)  # 4 applications per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    if request.method == 'POST':
+        application_id = request.POST.get('application_id')
+        action = request.POST.get('action')
+        application = get_object_or_404(AdoptionApplication, id=application_id)
+        if action == 'approve':
+            application.status = 'approved'
+            application.pet.status = 'adopted'
+            application.pet.save()
+        elif action == 'reject':
+            application.status = 'rejected'
+            application.pet.status = 'available'
+            application.pet.save()
+        application.save()
+        messages.success(request, f"Application {action}d successfully!")
+        # Preserve the current page in the redirect
+        return redirect(f"{request.path}?page={page_number or 1}")
+    
+    return render(request, 'admin_manage_adoption.html', {'page_obj': page_obj})
+
+def view_adoption_history(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
+    groups = AdoptionGroup.objects.filter(applicant=user).order_by('-timestamp')
+    return render(request, 'adoption_history.html', {'groups': groups})
+
+def adoption_stats_view(request):
+    if 'user_id' not in request.session:
+        return redirect('login_step')
+    
+    user = get_object_or_404(WebUser, pk=request.session['user_id'])
+    
+    # Adoption Stats
+    total_pets_listed = PetAdoption.objects.filter(seller=user).count()
+    pets_adopted_out = PetAdoption.objects.filter(seller=user, status='adopted').count()
+    pets_adopted_by_you = AdoptionApplication.objects.filter(applicant=user, status='approved').count()
+    applications_submitted = AdoptionApplication.objects.filter(applicant=user).count()
+    
+    # Successful Adoptions (both as adopter and seller)
+    successful_adoptions_as_adopter = AdoptionApplication.objects.filter(applicant=user, status='approved')
+    successful_adoptions_as_seller = AdoptionApplication.objects.filter(pet__seller=user, status='approved')
+    successful_adoptions = (successful_adoptions_as_adopter | successful_adoptions_as_seller).distinct().order_by('-created_at')
+    
+    context = {
+        'total_pets_listed': total_pets_listed,
+        'pets_adopted_out': pets_adopted_out,
+        'pets_adopted_by_you': pets_adopted_by_you,
+        'applications_submitted': applications_submitted,
+        'successful_adoptions': successful_adoptions,
+    }
+    
+    return render(request, 'adoption_stats.html', context)
+
 
 def search_results(request):
     query = request.GET.get('q', '')
@@ -785,22 +990,17 @@ def stats_and_transactions_view(request):
 
     # Metrics
     total_books_listed = Listing.objects.filter(seller=user).count()
-    books_sold = Purchase.objects.filter(seller=user, status='DELIVERED').count()
+    books_sold = Purchase.objects.filter(seller=user, status='CONFIRMED').count()
     books_purchased = Purchase.objects.filter(buyer=user).count()
-    earnings = Purchase.objects.filter(seller=user, status='DELIVERED').aggregate(
+    earnings = Purchase.objects.filter(seller=user, status='CONFIRMED').aggregate(
         total_earnings=Sum('listing__price')
     )['total_earnings'] or 0
 
     # Transactions
-    pending_transactions = Purchase.objects.filter(
+    transactions = Purchase.objects.filter(
         Q(buyer=user) | Q(seller=user), status='CONFIRMED'
     ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
-    active_transactions = Purchase.objects.filter(
-        Q(buyer=user) | Q(seller=user), status='SHIPPED'
-    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
-    completed_transactions = Purchase.objects.filter(
-        Q(buyer=user) | Q(seller=user), status='DELIVERED'
-    ).select_related('listing', 'buyer', 'seller').order_by('-purchase_date')
+    
 
     context = {
         'user': user,
@@ -808,9 +1008,10 @@ def stats_and_transactions_view(request):
         'books_sold': books_sold,
         'books_purchased': books_purchased,
         'earnings': earnings,
-        'pending_transactions': pending_transactions,
-        'active_transactions': active_transactions,
-        'completed_transactions': completed_transactions,
+        'transactions': transactions,
     }
 
     return render(request, 'stats_and_trans.html', context)
+
+
+

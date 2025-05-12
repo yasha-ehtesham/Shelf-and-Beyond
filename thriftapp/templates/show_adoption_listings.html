@@ -3,61 +3,85 @@
 
 {% block content %}
 <div class="centered-content">
-    <h1>All Pet Adoption Listings</h1>
+    <h1>Pet Adoption Listings</h1>
 
-    <br><br><br>
-
-    {% if page_obj %}
-        <div class="listings-container">
-            {% for listing in page_obj %}
-                <div class="listing-card">
-                   
-                    {% if listing.image %}
-                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
-                    {% endif %}
-
-                    <p class="book-title">{{ listing.title }}</p>
-
-
-                    <p><strong>Age:</strong> {{ listing.age }} years</p>
-                    <p><strong>Breed:</strong> {{ listing.breed }}</p>
-                    <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
-
-                    <div class="list-buttons">
-                        <form action="{% url 'details_adoption_listing' %}" method="get">
-                            <input type="hidden" name="listing_id" value="{{ listing.listing_id }}"> 
-                            <button type="submit" class="details_listing">View Details</button>
-                        </form>
-                    </div>
-                </div>
-            {% empty %}
-                <p>No adoption listings available at the moment.</p>
-            {% endfor %}
-        </div>
-
-        <br><br><br>
-
-
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    <div class="listings-container">
+        {% for listing in page_obj %}
+        <div class="listing-card">
+            {% if listing.image %}
+            <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
             {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <strong>{{ num }}</strong>
-                {% else %}
-                    <a href="?page={{ num }}">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">Next</a>
-            {% endif %}
+            <div class="listing-details">
+                <h5>{{ listing.title }}</h5>
+                <p><strong>Age:</strong> {{ listing.age }} years</p>
+                <p><strong>Breed:</strong> {{ listing.breed }}</p>
+                <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
+                <a href="{% url 'pet_adoption_details' %}?listing_id={{ listing.listing_id }}">View Details</a>
+            </div>
         </div>
+        {% empty %}
+        <p>No pet adoption listings available.</p>
+        {% endfor %}
+    </div>
 
-    {% else %}
-        <p>No adoption listings available at the moment.</p>
-    {% endif %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <strong>{{ num }}</strong>
+            {% else %}
+                <a href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
+
+<style>
+    .listings-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .listing-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 250px;
+        background-color: #fef1dd;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .listing-image {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+    .listing-details {
+        margin-top: 10px;
+    }
+    .pagination {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .pagination a {
+        padding: 5px 10px;
+        margin: 0 5px;
+        text-decoration: none;
+        color: #ba8c63;
+    }
+    .pagination strong {
+        padding: 5px 10px;
+        background-color: #ba8c63;
+        color: white;
+    }
+</style>

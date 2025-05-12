@@ -1,0 +1,33 @@
+{% extends "base2.html" %}
+{% block content %}
+
+<div class="centered-content">
+    <h2>Your Adoption History</h2>
+
+    <div class="basket-text-box">
+        <div class="basket-text-container">
+
+            {% for group in groups %}
+                <div style="margin-bottom: 1.5em;">
+                    <p><strong>Date:</strong> {{ group.timestamp }}</p>
+                    <ol>
+                        {% for application in group.adoptionapplication_set.all %}
+                            <li>{{ application.pet.title }} - Status: {{ application.status }}</li>
+                        {% endfor %}
+                    </ol>
+                    <hr>
+                </div>
+            {% empty %}
+                <p>No adoptions yet.</p>
+            {% endfor %}
+
+            <br>
+            <a href="{% url 'view_basket' %}" style="color: black; text-decoration: underline; font-weight: bold; font-family: 'Georgia', serif;">
+                Back to Adoption Basket
+            </a>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

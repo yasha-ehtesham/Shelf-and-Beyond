@@ -51,12 +51,22 @@ class InboxForm(forms.ModelForm):
         }
 
 
-from .models import PetAdoption
-
 from django import forms
-from .models import PetAdoption  # Updated to reflect the new model name
+from .models import PetAdoption, AdoptionApplication
 
 class PetAdoptionForm(forms.ModelForm):
     class Meta:
         model = PetAdoption
-        fields = ['title', 'description', 'age', 'food_habit', 'potty_trained', 'breed', 'gender']
+        fields = ['title', 'description', 'age', 'breed', 'food_habit', 'potty_trained', 'gender', 'image']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'potty_trained': forms.CheckboxInput(),
+        }
+
+class AdoptionApplicationForm(forms.ModelForm):
+    class Meta:
+        model = AdoptionApplication
+        fields = ['name', 'phone_number', 'address', 'id_document']
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 4}),
+        }

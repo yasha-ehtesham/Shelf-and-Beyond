@@ -1,88 +1,50 @@
 {% extends "base2.html" %}
 {% load static %}
-    
-{% block content %}    
-</head>
-<body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container-fluid">
-        <a class="navbar-brand text-white" href="#">Shelf & Beyond</a>
-        <div class="d-flex justify-content-between w-100">
-            <form class="d-flex search-bar" role="search">
-                <input class="form-control" type="search" placeholder="Search by book name or author name" aria-label="Search">
-                <button class="btn btn-outline-light" type="submit">Search</button>
-            </form>
-            <div class="navbar-profile d-flex gap-2">
-                <a href="/profile" class="btn btn-outline-light">Profile</a>
-                <form action="{% url 'logout' %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-light">Log out</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</nav>
+{% block content %}
+<div class="overlay-box">
+    <div class="form-container">
+        <div class="centered-content">
+            <h1>Send Message to {{ seller.firstname }} {{ seller.lastname }}</h1>
 
-<!-- Page Layout -->
-<div class="d-flex">
-
-    <!-- Side Navigation -->
-    <div class="side-navigation">
-        <a href="/show_listings/" class="btn btn-dark">Browse All</a>
-        <a href="/notifications" class="btn btn-dark">Notifications</a>
-        <a href="/message/show/" class="btn btn-dark">Inbox</a>
-        <a href="/buying" class="btn btn-dark">Buying</a>
-        <a href="/selling" class="btn btn-dark">Selling</a>
-        <a href="/listing/create" class="btn btn-dark">Create Listing</a>
-        <a href="/manage_listings/" class="btn btn-dark">Manage Listings</a>
-    </div>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send Message to {{ seller.username }}</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <main>
-        
-        <div class="overlay-box">
-            <div class="form-container">
-                <div class="centered-content">
-                    <h1>Send Message to {{ seller.firstname }} {{ seller.lastname }}</h1>
-                
-                    <form method="POST" action="{% url 'send_message' seller.web_user_id %}">
-                        {% csrf_token %}
-                        {{ form.receiver.as_hidden }}
-                        <div>
-                            {{ form.sender_name.label_tag }}
-                            {{ form.sender_name }}
-                            {% if form.sender_name.errors %}
-                                <div class="error">{{ form.sender_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <br>
-                        <div>
-                            {{ form.message.label_tag }}
-                            {{ form.message }}
-                            {% if form.message.errors %}
-                                <div class="error">{{ form.message.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <br>
-                        <button type="submit" class="back-btn">Send Message</button>
-                    </form>
+            {% if form.errors %}
+                <div class="error" style="color: red; text-align: center; margin-bottom: 15px;">
+                    <p>Please correct the following errors:</p>
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
                 </div>
-            </div>
-        </div>
-        
-    </main>
+            {% endif %}
 
-</div> <!-- End of d-flex -->
+            <form method="POST" action="{% url 'send_message' seller.web_user_id %}">
+                {% csrf_token %}
+                {{ form.receiver.as_hidden }}
+                <div>
+                    {{ form.sender_name.label_tag }}
+                    {{ form.sender_name }}
+                    {% if form.sender_name.errors %}
+                        <div class="error" style="color: red;">{{ form.sender_name.errors }}</div>
+                    {% endif %}
+                </div>
+                <br>
+                <div>
+                    {{ form.message.label_tag }}
+                    {{ form.message }}
+                    {% if form.message.errors %}
+                        <div class="error" style="color: red;">{{ form.message.errors }}</div>
+                    {% endif %}
+                </div>
+                <br>
+                <button type="submit" class="back-btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
-</body>
-</html>
 
 
 

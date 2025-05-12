@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 
@@ -137,21 +138,66 @@ class Inbox(models.Model):
     
 from django.db import models
 
-class PetAdoption(models.Model):
-    listing_id = models.AutoField(primary_key=True)  # Serial number for the listing
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    age = models.PositiveIntegerField()
-    food_habit = models.CharField(max_length=100)
-    potty_trained = models.BooleanField()
-    breed = models.CharField(max_length=100)
-    gender = models.CharField(max_length=6, choices=[('male', 'Male'), ('female', 'Female')])
-    seller = models.ForeignKey('WebUser', on_delete=models.CASCADE)  # Link to the user (adopter)
-    status = models.CharField(max_length=20, default='available')
-    image = models.ImageField(upload_to='pet_images/', null=True, blank=True)  # Added image field
+from django.db import models
+from .models import WebUser
 
-    class Meta:
-        db_table = 'petadoptiondb'  # Custom table name
+class PetAdoption(models.Model):
+    STATUS_CHOICES = (
+        ('available', 'Available'),
+        ('adopted', 'Adopted'),
+        ('cancelled', 'Cancelled'),
+    )
+    GENDER_CHOICES = (
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+    )
+
+    listing_id = models.AutoField(primary_key=True)
+    seller = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    age = models.IntegerField()
+    breed = models.CharField(max_length=100)
+    food_habit = models.CharField(max_length=100)
+    potty_trained = models.BooleanField(default=False)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
+    image = models.ImageField(upload_to='pet_images/', blank=True, null=True)
 
     def __str__(self):
         return self.title
+
+class AdoptionApplication(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
+    pet = models.ForeignKey(PetAdoption, on_delete=models.CASCADE)
+    applicant = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15)
+    address = models.TextField()
+    id_document = models.ImageField(upload_to='id_documents/')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    adoption_group = models.ForeignKey('AdoptionGroup', null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.name} - {self.pet.title}"
+
+class AdoptionGroup(models.Model):
+    applicant = models.ForeignKey(WebUser, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Adoption Group for {self.applicant.username} at {self.timestamp}"
+    
+    def __str__(self):
+        return self.title
+    
+
+
+

@@ -22,6 +22,10 @@
                 <button type="submit" class="stats-and-trans">VIEW ALL STATS AND TRANSACTIONS</button>
             </form>
             <br>
+            <form action="{% url 'adoption_stats' %}" method="get">
+                <button type="submit" class="adoption-stats">VIEW ALL ADOPTION STATS</button>
+            </form>
+            <br>
             <form action="{% url 'pet_adoption' %}" method="get">
                 <button type="submit" class="pet_adoption">CREATE ADOPTION LISTING</button>
             </form>
