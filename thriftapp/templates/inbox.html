@@ -1,0 +1,167 @@
+{% extends "base2.html" %}
+{% load static %}
+
+{% block content %}
+
+    <style>
+        .centered-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgb(241, 214, 180);
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #ba8c63;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .messages-container {
+            max-height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #d9b27f;
+            padding: 5px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            flex-direction: column;
+        }
+        .message.current-user {
+            align-items: flex-end;
+        }
+        .message.other-user {
+            align-items: flex-start;
+        }
+        .message-bubble {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .message.current-user .message-bubble {
+            background-color: #d1a66d;
+            color: white;
+            margin-left: auto;
+        }
+        .message.other-user .message-bubble {
+            background-color: #f0f0f0;
+            color: #333;
+            margin-right: auto;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .message.current-user .message-header {
+            justify-content: flex-end;
+        }
+        .message.other-user .message-header {
+            justify-content: flex-start;
+        }
+        .message-sender {
+            font-weight: bold;
+            color: #ba8c63;
+        }
+        .message-timestamp {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .message-content {
+            margin: 0;
+            word-wrap: break-word;
+        }
+        .no-messages {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .btn-primary {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #d1a66d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #ba8c63;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="centered-content">
+    <h2>Chat with {{ other_user.username }}</h2>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="error">
+            <p>Please correct the following errors:</p>
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="messages-container">
+        {% for msg in messages %}
+            <div class="message {% if msg.sender.web_user_id == request.session.user_id %}current-user{% else %}other-user{% endif %}">
+                <div class="message-header">
+                    <span class="message-sender">{{ msg.sender.username }}</span>
+                    <span class="message-timestamp">{{ msg.timestamp|date:"H:i, M d" }}</span>
+                </div>
+                <div class="message-bubble">
+                    <p class="message-content">{{ msg.message }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <p class="no-messages">No messages yet.</p>
+        {% endfor %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.receiver.as_hidden }}
+        <div>
+            {{ form.sender_name.label_tag }}
+            {{ form.sender_name }}
+            {% if form.sender_name.errors %}
+                <div class="error">{{ form.sender_name.errors }}</div>
+            {% endif %}
+        </div>
+        <br>
+        <div>
+            {{ form.message.label_tag }}
+            {{ form.message }}
+            {% if form.message.errors %}
+                <div class="error">{{ form.message.errors }}</div>
+            {% endif %}
+        </div>
+        <br>
+        <button type="submit" class="btn-primary">Send</button>
+    </form>
+</div>
+</body>
+</html>
+{% endblock %}

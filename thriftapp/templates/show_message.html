@@ -1,20 +1,17 @@
+{% extends "base2.html" %}
 {% load static %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>My Messages</title>
+    <title>My Conversations</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        body {
-            font-family: 'Georgia', serif;
-            background-color: #e3c8a2;
-            margin: 0;
-            padding: 20px;
-        }
         .centered-content {
             max-width: 800px;
             margin: 0 auto;
-            background-color: #fef1dd;
+            background-color: rgb(241, 214, 180);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -23,29 +20,29 @@
             color: #ba8c63;
             text-align: center;
         }
-        .message {
+        .conversation {
             border-bottom: 1px solid #d9b27f;
             padding: 15px 0;
             margin-bottom: 15px;
         }
-        .message:last-child {
+        .conversation:last-child {
             border-bottom: none;
         }
-        .message-header {
+        .conversation-header {
             display: flex;
             justify-content: space-between;
             font-size: 0.9em;
             color: #666;
         }
-        .message-content {
+        .conversation-content {
             margin: 10px 0;
             color: #333;
         }
-        .message-sender {
+        .conversation-sender {
             font-weight: bold;
             color: #ba8c63;
         }
-        .no-messages {
+        .no-conversations {
             text-align: center;
             color: #666;
             font-style: italic;
@@ -67,31 +64,32 @@
 </head>
 <body>
 <div class="centered-content">
-    <h1>My Messages</h1>
+    <h1>My Conversations</h1>
     
-    {% if messages %}
-        {% for message in messages %}
-            <div class="message">
-                <div class="message-header">
+    {% if conversations %}
+        {% for conv in conversations %}
+            <div class="conversation">
+                <div class="conversation-header">
                     <span>
-                        <span class="message-sender">
-                            {{ message.sender_name }}
+                        <span class="conversation-sender">
+                            {{ conv.other_user.username }}
                         </span>
-                        (from {{ message.sender.firstname }} {{ message.sender.lastname }}
-                        to {{ message.receiver.firstname }} {{ message.receiver.lastname }})
+                        ({{ conv.other_user.firstname }} {{ conv.other_user.lastname }})
                     </span>
-                    <span>{{ message.timestamp|date:"F d, Y H:i" }}</span>
+                    <span>{{ conv.latest_message.timestamp|date:"F d, Y H:i" }}</span>
                 </div>
-                <div class="message-content">
-                    {{ message.message }}
+                <div class="conversation-content">
+                    {{ conv.latest_message.message|truncatechars:100 }}
                 </div>
+                <a href="{% url 'view_conversation' conv.other_user.web_user_id %}" class="back-btn">View Conversation</a>
             </div>
         {% endfor %}
     {% else %}
-        <p class="no-messages">You have no messages.</p>
+        <p class="no-conversations">You have no conversations.</p>
     {% endif %}
     
-    <a href="{% url 'welcome_page' %}" class="back-btn">Back to Browse</a>
+    <a href="{% url 'welcome_page' %}" class="back-btn">Back to browser</a>
 </div>
 </body>
 </html>
+{% endblock %}

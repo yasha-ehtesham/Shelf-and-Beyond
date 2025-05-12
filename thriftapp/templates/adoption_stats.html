@@ -5,66 +5,65 @@
 <div class="centered-content">
     {% if request.session.user_id %}
 
-        <!-- Metrics Section -->
+        <!-- Adoption Metrics Section -->
         <div class="metrics">
-            <h2>Your Stats</h2>
+            <h2>Your Adoption Stats</h2>
             <div class="metrics-grid">
                 <div class="metric-box">
-                    <h3>Total Books Listed</h3>
-                    <p>{{ total_books_listed }}</p>
+                    <h3>Total Pets Listed</h3>
+                    <p>{{ total_pets_listed }}</p>
                 </div>
                 <div class="metric-box">
-                    <h3>Books Sold</h3>
-                    <p>{{ books_sold }}</p>
+                    <h3>Pets Adopted Out</h3>
+                    <p>{{ pets_adopted_out }}</p>
                 </div>
                 <div class="metric-box">
-                    <h3>Books Purchased</h3>
-                    <p>{{ books_purchased }}</p>
+                    <h3>Pets You Adopted</h3>
+                    <p>{{ pets_adopted_by_you }}</p>
                 </div>
                 <div class="metric-box">
-                    <h3>Earnings</h3>
-                    <p>{{ earnings|floatformat:2 }} BDT</p>
+                    <h3>Applications Submitted</h3>
+                    <p>{{ applications_submitted }}</p>
                 </div>
             </div>
         </div>
         <br>
 
-        <!-- Transactions Section -->
-        <div class="transactions">
-            <h2>Your Transactions</h2>
-
-
-            <h3>Transactions</h3>
-            {% if transactions %}
-                <table class="transaction-table">
+        <!-- Successful Adoptions Section -->
+        <div class="adoptions">
+            <h2>Your Successful Adoptions</h2>
+            <h3>Adoptions</h3>
+            {% if successful_adoptions %}
+                <table class="adoption-table">
                     <thead>
                         <tr>
-                            <th>Book Title</th>
-                            <th>Buyer</th>
-                            <th>Seller</th>
-                            <th>Price</th>
-                            <th>Purchase Date</th>
+                            <th>Pet Title</th>
+                            <th>Adopter</th>
+                            <th>Shelter/Seller</th>
+                            <th>Application Date</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for transaction in transactions %}
+                        {% for adoption in successful_adoptions %}
                             <tr>
-                                <td>{{ transaction.listing.title }}</td>
-                                <td>{{ transaction.buyer.firstname }} {{ transaction.buyer.lastname }}</td>
-                                <td>{{ transaction.seller.firstname }} {{ transaction.seller.lastname }}</td>
-                                <td>{{ transaction.listing.price|floatformat:2 }} BDT</td>
-                                <td>{{ transaction.purchase_date|date:"F d, Y H:i" }}</td>
+                                <td>{{ adoption.pet.title }}</td>
+                                <td>{{ adoption.applicant.firstname }} {{ adoption.applicant.lastname }}</td>
+                                <td>{{ adoption.pet.seller.firstname }} {{ adoption.pet.seller.lastname }}</td>
+                                <td>{{ adoption.created_at|date:"F d, Y H:i" }}</td>
+                                <td>{{ adoption.status }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <p>No transactions.</p>
+                <p>No successful adoptions yet.</p>
             {% endif %}
             <br>
+        </div>
 
     {% else %}
-        <p>Please log in to view your transactions and stats.</p>
+        <p>Please log in to view your adoption stats and history.</p>
     {% endif %}
 </div>
 
@@ -90,26 +89,26 @@
         font-size: 1.5em;
         margin: 0;
     }
-    .transactions {
+    .adoptions {
         margin-top: 30px;
     }
-    .transaction-table {
+    .adoption-table {
         width: 100%;
         border-collapse: collapse;
         background-color: #fef1dd;
         border-radius: 10px;
         overflow: hidden;
     }
-    .transaction-table th, .transaction-table td {
+    .adoption-table th, .adoption-table td {
         padding: 10px;
         text-align: left;
         border-bottom: 1px solid #d9b27f;
     }
-    .transaction-table th {
+    .adoption-table th {
         background-color: #ba8c63;
         color: white;
     }
-    .transaction-table tr:last-child td {
+    .adoption-table tr:last-child td {
         border-bottom: none;
     }
 </style>

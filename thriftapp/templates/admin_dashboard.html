@@ -15,6 +15,9 @@
                 <li><strong>Total Revenue:</strong> {{ total_revenue|floatformat:2 }} BDT</li>
                 <li><strong>System Earnings:</strong> {{ system_earnings|floatformat:2 }} BDT</li>
             </ul>
+            <nav>
+                <a href="{% url 'manage_adoption_applications' %}">Pet Applications</a>
+            </nav>
         </div>
     </div>
 

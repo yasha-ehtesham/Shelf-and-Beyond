@@ -10,5 +10,16 @@
     <p><strong>Potty Trained:</strong> {{ listing.potty_trained|yesno:"Yes,No" }}</p>
     <p><strong>Gender:</strong> {{ listing.get_gender_display }}</p>
     <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
+
+    {% if listing.status != 'adopted' and listing.seller.web_user_id != request.session.user_id %}
+                <form action="{% url 'adopt' %}" method="get">
+                    {% if request.session.user_id %}
+                    <input type="hidden" name="basket_item" value="{{ listing.listing_id }}">
+                    <button type="submit" class="button">Adopt</button>
+                    {% endif %}
+                </form>
+                {% endif %}
 </div>
+
+
 {% endblock %}

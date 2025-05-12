@@ -39,7 +39,7 @@
             <a href="{% url 'manage_listings' %}">My Listings</a>
             <a href="{% url 'show_listings' %}">All Listings</a>
             <a href="{% url 'show_adoption_listings' %}">All Adoption Listings</a>
-            <a href="{% url 'manage_adoption_listings' %}">Manage Adoption Listings</a>
+            <a href="{% url 'manage_adoption_listings' %}">My Adoption Listings</a>
 
             {% if request.user.is_superuser %}
                 <a href="{% url 'admin_notifications' %}">System Alerts</a>
