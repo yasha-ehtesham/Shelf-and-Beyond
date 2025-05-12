@@ -23,13 +23,103 @@ from django.db.models import Sum
 from decimal import Decimal
 
 load_dotenv()  # Load variables from .env
+import stripe
+from django.views.decorators.csrf import csrf_exempt
 
 GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
 NYT_API_KEY = os.getenv('NYT_API_KEY')
+# STRIPE_API_KEY =  os.getenv("STRIPE_SECRET_KEY") 
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")  
+
+# stripe_api_key = os.getenv("STRIPE_SECRET_KEY")  
+
 
 
 # Create your views here.
 #------------------------------------------------------------------------
+
+
+@csrf_exempt
+def checkout(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+    
+    # Generate line_items for Stripe
+    line_items = []
+    for item in listings:
+        line_items.append({
+            'price_data': {
+                'currency': 'bdt',
+                'unit_amount': int(item.price) * 100,  # Stripe uses smallest currency unit
+                'product_data': {
+                    'name': item.title,
+                },
+            },
+            'quantity': 1,
+        })
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url=request.build_absolute_uri('/checkout/success/'),
+        cancel_url=request.build_absolute_uri('/checkout/cancel/'),
+    )
+
+    return redirect(session.url, code=303)
+
+def checkout_success(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    if not cart:
+        return render(request, "checkout_success.html", {
+            'message': "Your cart was already empty or purchases were already confirmed."
+        })
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'
+            listing.save()
+
+    # Clear cart
+    request.session['cart'] = []
+
+    return render(request, "checkout_success.html", {
+        'message': "Payment successful! Your purchases have been confirmed."
+    })
+
+
+def checkout_cancel(request):
+    return render(request, "checkout_cancel.html")
+
+
+
+#-----------------------------------------------------------------------
 
 
 @login_required
@@ -146,6 +236,11 @@ def add_to_cart(request):
     return render(request, "add_to_cart.html", context)
 
 
+import json
+from django.http import HttpResponse
+from django.http import JsonResponse
+
+
 def view_cart(request):
     web_user_id = request.session.get('user_id')
     if not web_user_id:
@@ -162,63 +257,12 @@ def view_cart(request):
         'listings': listings,
         'purchased_ids': purchased_ids
     })
-
-
-def confirm_all_purchases(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
-
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
-    cart = request.session.get('cart', [])
-    if not cart:
-        return redirect('view_cart')
-
-    listings = Listing.objects.filter(listing_id__in=cart)
-
-    # Create a new group for this checkout session
-    group = PurchaseGroup.objects.create(buyer=web_user)
-
-    for listing in listings:
-        # Avoid double-purchasing
-        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
-            Purchase.objects.create(
-                buyer=web_user,
-                listing=listing,
-                seller=listing.seller,
-                purchase_group=group
-            )
-            listing.status = 'sold'  # 👈 mark as sold
-            listing.save()
-
-    # Clear cart after successful grouped purchase
-    request.session['cart'] = []
-
-    return redirect('view_purchase_history')
+    # return JsonResponse({'cart_items': list(listings.values())})
 
 
 
-def view_total_bill(request):
-    web_user_id = request.session.get('user_id')
-    if not web_user_id:
-        return redirect('login_step')
 
-    web_user = get_object_or_404(WebUser, pk=web_user_id)
 
-    cart = request.session.get('cart', [])
-    # Only consider purchases that are:
-    # - in the cart
-    # - confirmed (exist in Purchase model for this user)
-    purchases = Purchase.objects.filter(
-        buyer=web_user,
-        listing__listing_id__in=cart
-    )
-
-    total_bill = sum(purchase.listing.price for purchase in purchases)
-
-    return render(request, "view_total_bill.html", {
-        'total_bill': total_bill
-    })
 
 
 def view_purchase_history(request):
@@ -241,7 +285,15 @@ def remove_from_cart(request):
     if listing_id and listing_id in cart:
         cart.remove(listing_id)
         request.session['cart'] = cart
-    return redirect('view_cart')  # or your cart page URL name
+    return redirect('view_cart')  
+
+
+    # if listing_id in cart:
+    #     cart.remove(listing_id)
+    #     request.session['cart'] = cart
+    #     return JsonResponse({'success': True, 'message': f'Listing {listing_id} removed from cart'})
+    # else:
+    #     return JsonResponse({'success': False, 'message': 'Listing not found in cart'})
 
 
 
@@ -468,6 +520,8 @@ def logout_view(request):
 def seller_public_profile(request, seller_id):
     seller = get_object_or_404(WebUser, pk=seller_id)  # pk = web_user_id
     return render(request, 'seller_profile.html', {'seller': seller})
+
+    
 
 
 def listings(request):
