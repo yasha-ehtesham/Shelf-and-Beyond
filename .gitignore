@@ -1,8 +1,19 @@
+thrift/settings.py
+
 
 # Byte-compiled / optimized / DLL files
+
+
+
+*.pyc
 __pycache__/
+
+
 *.py[cod]
 *$py.class
+
+*.pyc
+__pycache__/
 
 # C extensions
 *.so
@@ -33,4 +44,4 @@ Thumbs.db
 
 # Media
 /media/
->>>>>>> c4d0028 (Restore and update .gitignore)
+>>>>>> c4d0028 (Restore and update .gitignore

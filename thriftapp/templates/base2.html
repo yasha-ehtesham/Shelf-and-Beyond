@@ -62,7 +62,9 @@
 
             <!-- ✅ Right: Auth Buttons -->
             <div class="auth-buttons">
-                {% if request.session.user_id %}
+                {% if request.session.user_id or request.user.is_superuser  %}
+                    <a href="{% url 'notifications' %}" title="Notifications">🔔</a>
+                    <a href="{% url 'view_profile' %}" title="View Profile">👤</a>
                     <a href="{% url 'create_listing' %}"><button class="btn primary">CREATE LISTING</button></a>
                     <a href="{% url 'logout' %}"><button class="btn danger">LOG OUT</button></a>
                 {% elif request.user.is_superuser %}
@@ -90,12 +92,7 @@
             <a href="#">Authors</a>
             <a href="#">Bestsellers</a>
 
-            {% if request.user.is_superuser %}
-                <!-- Admin user -->
-            {% elif request.session.user_id %}
-                <a href="{% url 'notifications' %}">Notifications</a>
-                <a href="{% url 'view_profile' %}">Profile</a>
-            {% endif %}
+
         </nav>
     </header>
 

@@ -1,21 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container my-5">
-    <h2 style="font-family: Georgia, serif;">📢 Notifications</h2>
-    {% if notifications %}
-        <ul class="list-group mt-3">
-            {% for note in notifications %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span style="font-family: Georgia, serif;">{{ note.message }}</span>
-                <small class="text-muted">{{ note.timestamp|date:"M d, Y H:i" }}</small>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="mt-4 text-muted">You have no notifications.</p>
-    {% endif %}
+    <h2 class="text-center mb-4" style="font-family: Georgia, serif; font-weight: bold; color: white;">📢 Your Notifications</h2>
 
-    <div class="mt-4">
+    <div style="background-color: #f9e5c8; padding: 25px; border-radius: 20px; color: black;">
+        {% if notifications %}
+        <table style="width: 100%; border-collapse: collapse; font-family: Georgia, serif; color: black;">
+            <thead style="background-color: #e5ba88;">
+                <tr style="text-align: left;">
+                    <th style="padding: 10px;">Message</th>
+                    <th style="padding: 10px;">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody style="background-color: #fff8e6;">
+                {% for note in notifications %}
+                <tr>
+                    <td style="padding: 10px;">{{ note.message }}</td>
+                    <td style="padding: 10px;">{{ note.timestamp|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="mt-4 text-muted" style="color: black;">You have no notifications.</p>
+        {% endif %}
+    </div>
+
+    <div class="text-center mt-4">
         <a href="{% url 'welcome_page' %}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
 </div>

@@ -14,19 +14,14 @@ import os
 import stripe
 import requests
 from dotenv import load_dotenv
-from decimal import Decimal
-import requests
-
 from .forms import SignupForm1,SignupForm2, ListingForm, ReviewForm, InboxForm, PetAdoptionForm, WebUserUpdateForm
-from .models import WebUser, Role, AdminProfile,Listing, Review, Purchase, PurchaseGroup, Inbox, Notification, PetAdoption
+from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup, Inbox, Notification, PetAdoption, ExternalBookSource
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Sum
+from decimal import Decimal
+from thrift.settings import GOOGLE_BOOKS_API_KEY, NYT_API_KEY
 
-# Load environment variables
-load_dotenv()
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
-NYT_API_KEY = os.getenv('NYT_API_KEY')
-
-# Custom decorator to check for session-based WebUser login
+# Checks for session key 'web_user_id'
 def session_user_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -266,6 +261,9 @@ def view_cart(request):
         'listings': listings,
         'purchased_ids': purchased_ids
     })
+
+
+
 
 
 
@@ -673,8 +671,8 @@ def welcome_page(request):
     return render(request, "home.html", context)
 
 from django.contrib import messages
-from .models import WebUser, PetAdoption  # Updated to reflect the new model name
-from .forms import PetAdoptionForm  # Updated to reflect the new form
+from .models import AdminProfile, Inbox, Listing, Notification, Purchase, PurchaseGroup, Role, WebUser, PetAdoption  # Updated to reflect the new model name
+from .forms import InboxForm, ListingForm, PetAdoptionForm, ReviewForm, SignupForm1, SignupForm2, WebUserUpdateForm  # Updated to reflect the new form
 
 def pet_adoption(request):
     if 'user_id' not in request.session:
@@ -842,23 +840,6 @@ def update_profile(request):
         form = WebUserUpdateForm(instance=user)
 
     return render(request, 'update_profile.html', {'form': form})
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
-def manage_users(request):
-    users = WebUser.objects.all()
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        role_id = request.POST.get('role_id')
-        user = WebUser.objects.get(pk=user_id)
-        role = Role.objects.get(pk=role_id)
-        user.role = role
-        user.save()
-        messages.success(request, f"Updated role for {user.username}")
-        return redirect('manage_users')
-    return render(request, 'admin_manage_users.html', {'users': users, 'roles': Role.objects.all()})
-
-
-
 
 @session_user_required
 def view_profile(request):
@@ -877,28 +858,66 @@ def view_profile(request):
 
 @session_user_required
 def compare_prices(request):
-    # Fetch all unique book titles that have listings
-    unique_titles = Listing.objects.values_list('title', flat=True).distinct()
-
+    # Normalize titles: strip spaces and lowercase for grouping
+    all_titles = Listing.objects.filter(status='available').values_list('title', flat=True)
+    normalized_titles = set(title.strip().lower() for title in all_titles)
+    
     books_with_listings = []
 
-    for title in unique_titles:
-        listings = Listing.objects.filter(title=title, status='available')
+    for norm_title in normalized_titles:
+        # Match listings whose stripped, lowercased title equals the norm_title
+        listings = Listing.objects.filter(status='available')
+        listings = [l for l in listings if l.title.strip().lower() == norm_title]
 
-        if listings.exists():
-            books_with_listings.append({
-                'title': title,
-                'listings': [
-                    {
-                        'seller_name': listing.seller.username, 
-                        'price': listing.price,
-                        'condition': listing.condition,
-                    }
-                    for listing in listings
-                ]
-            })
+        if not listings:
+            continue
+
+        # Use the first actual title (preserves original casing)
+        display_title = listings[0].title.strip()
+
+        external_sources = ExternalBookSource.objects.filter(listing__title__iexact=display_title)
+
+        books_with_listings.append({
+            'title': display_title,
+            'listings': [
+                {
+                    'listing_id': listing.listing_id,
+                    'seller_name': listing.seller.username,
+                    'price': listing.price,
+                    'condition': listing.condition,
+                }
+                for listing in listings
+            ],
+            'external_sources': [
+                {
+                    'source_name': source.source_name,
+                    'price': source.price,
+                    'url': source.url
+                }
+                for source in external_sources
+            ]
+        })
 
     return render(request, 'compare_prices.html', {'books_with_listings': books_with_listings})
+
+
+
+@session_user_required
+def compare_prices_per_book(request, title):
+    listings = Listing.objects.filter(title=title, status='available')
+    external_sources = ExternalBookSource.objects.filter(listing__title=title)
+
+    if not listings.exists() and not external_sources.exists():
+        return HttpResponse("No listings or sources available for this book.")
+
+    context = {
+        'title': title,
+        'listings': listings,
+        'external_sources': external_sources,
+    }
+    return render(request, 'compare_prices_per_book.html', context)
+
+
 
 @session_user_required
 def user_notifications(request):
@@ -909,19 +928,15 @@ def user_notifications(request):
 
     return render(request, 'user_notifications.html', {'notifications': notifications})
 
-
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def admin_notifications(request):
-    if not request.user.is_superuser:
-        messages.error(request, "Unauthorized access.")
-        return redirect('welcome_page')
+    try:
+        admin_profile = AdminProfile.objects.get(user=request.user)
+    except AdminProfile.DoesNotExist:
+        return redirect('admin_dashboard')  # fallback
 
-    web_admin = WebUser.objects.filter(username=request.user.username).first()
-
-    if not web_admin:
-        notifications = []
-    else:
-        notifications = Notification.objects.filter(recipient=web_admin).order_by('-timestamp')
+    notifications = Notification.objects.filter(recipient=admin_profile).order_by('-timestamp')
 
     return render(request, 'admin_notifications.html', {'notifications': notifications})
 
@@ -979,7 +994,8 @@ def confirm_all_purchases(request):
             for admin in admin_users:
                 Notification.objects.create(
                     recipient=admin,
-                    message=f"{web_user.firstname} purchased '{listing.title}' from {listing.seller.firstname}.")
+                    message=f"{web_user.firstname} purchased '{listing.title}' from {listing.seller.firstname}."
+                )
            
     # Clear cart after successful grouped purchase
     request.session['cart'] = []
@@ -1010,4 +1026,6 @@ def view_total_bill(request):
         'total_bill': total_bill
     })
 
+
+    
 

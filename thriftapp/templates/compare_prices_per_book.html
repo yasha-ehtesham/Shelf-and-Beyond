@@ -1,20 +1,14 @@
 {% extends 'base2.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center mb-4" style="font-family: Georgia, serif; font-weight: bold; color: black;">Compare Prices</h2>
+    <h2 class="text-center mb-4" style="font-family: Georgia, serif; font-weight: bold; color: white;">
+        Compare Prices for "{{ title }}"
+    </h2>
 
-    {% for book in books_with_listings %}
-    <div style="background-color: #f9e5c8; padding: 25px; border-radius: 20px; margin-bottom: 30px; color: black;">
-        <h3 class="text-center mb-3" style="color: black; font-family: Georgia, serif;">{{ book.title }}</h3>
+    <div style="background-color: #f9e5c8; padding: 25px; border-radius: 20px; color: black;">
 
-        <div class="text-center mb-3">
-            <a href="{% url 'compare_prices_per_book' title=book.title %}" class="btn btn-outline-primary btn-sm">
-                Go to Detailed Price Comparison
-            </a>
-        </div>
-
-        {% if book.listings %}
-        <h5 style="font-weight: bold; color: black;">Internal Listings</h5>
+        {% if listings %}
+        <h4 style="margin-bottom: 15px; font-weight: bold; color: black;">Internal Listings</h4>
         <table style="width: 100%; border-collapse: collapse; font-family: Georgia, serif; color: black;">
             <thead style="background-color: #e5ba88; color: black;">
                 <tr style="text-align: left;">
@@ -25,27 +19,30 @@
                 </tr>
             </thead>
             <tbody style="background-color: #fff8e6; color: black;">
-                {% for listing in book.listings %}
+                {% for listing in listings %}
                 <tr>
-                    <td style="padding: 10px;">{{ listing.seller_name }}</td>
+                    <td style="padding: 10px;">{{ listing.seller.username }}</td>
                     <td style="padding: 10px;">BDT {{ listing.price }}</td>
-                    <td style="padding: 10px;">{{ listing.condition }}</td>
+                    <td style="padding: 10px;">{{ listing.get_condition_display }}</td>
                     <td style="padding: 10px;">
                         <form action="{% url 'add_to_cart' %}" method="get">
                             <input type="hidden" name="cart_item" value="{{ listing.listing_id }}">
                             <button type="submit" class="btn btn-dark" style="font-weight: bold; font-size: 0.95rem; padding: 8px 16px; border-radius: 8px;">
                                 🛒 Add to Cart
                             </button>
+                            
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <p style="color: black;">No internal listings available for this book.</p>
         {% endif %}
 
-        {% if book.external_sources %}
-        <h5 class="mt-4" style="font-weight: bold; color: black;">External Sources</h5>
+        {% if external_sources %}
+        <h4 class="mt-4" style="margin-top: 30px; font-weight: bold; color: black;">External Sources</h4>
         <table style="width: 100%; border-collapse: collapse; font-family: Georgia, serif; color: black;">
             <thead style="background-color: #e5ba88; color: black;">
                 <tr style="text-align: left;">
@@ -55,7 +52,7 @@
                 </tr>
             </thead>
             <tbody style="background-color: #fff8e6; color: black;">
-                {% for source in book.external_sources %}
+                {% for source in external_sources %}
                 <tr>
                     <td style="padding: 10px;">{{ source.source_name }}</td>
                     <td style="padding: 10px;">BDT {{ source.price }}</td>
@@ -66,8 +63,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <p style="color: black;">No external price sources found.</p>
         {% endif %}
     </div>
-    {% endfor %}
+
+    <div class="text-center mt-4">
+        <a href="{% url 'compare_prices' %}" class="btn btn-secondary">Back to All Books</a>
+    </div>
 </div>
 {% endblock %}
