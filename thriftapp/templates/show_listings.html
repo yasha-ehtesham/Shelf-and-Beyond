@@ -1,10 +1,16 @@
 <!-- final html show_listings -->
+
 {% extends "base2.html" %}
 {% load static %}
 
 {% block content %}
 <div class="centered-content">
     <h1>All Listings</h1>
+
+    <br>
+    <br>
+    <br>
+
     {% if page_obj %}
         <div class="listings-container">
             {% for listing in page_obj %}
@@ -12,6 +18,8 @@
                     <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
                     <p class="book-title">{{ listing.title }}</p>
 
+                    <p><strong>Price:</strong> {{ listing.price }} BDT</p>
+                    <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
                     
 
                     <div class="list-buttons">

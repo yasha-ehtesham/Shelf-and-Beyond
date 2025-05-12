@@ -1,17 +1,32 @@
 {% extends "base2.html" %}
 
 {% block content %}
+<style>
+.centered-content {
+    max-width: 400px;
+    margin: 0 auto;
+    background-color: rgb(241, 214, 180);
+    padding: 5px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    color: #000000; /* Set font color to black for all text inside */
+}
 
- <div class="centered-content">
-     
-     
-    
-     <div class="listings-container">
-         
-         <div class="listing-details">
-             <h1>{{ listing.title }}</h1>    
-             <p><strong>Seller's name:</strong> {{ seller.firstname }} {{ seller.lastname }} </p>
-             <div class="profile-info">
+/* Ensure nested elements inherit the color */
+.centered-content h1,
+.centered-content p,
+.centered-content .info-item,
+.centered-content .info-item strong {
+    color: #000000; /* Explicitly set to black to override any inherited styles */
+}
+</style>
+
+<div class="centered-content">
+    <div class="listings-container">
+        <div class="listing-details">
+            <h1>Seller Information</h1>    
+            <p><strong>Seller's name:</strong> {{ seller.firstname }} {{ seller.lastname }} </p>
+            <div class="profile-info">
                 <div class="info-item">
                     <strong>Email:</strong> {{ seller.email }}
                 </div>
@@ -27,16 +42,8 @@
                 <div class="info-item">
                     <strong>Bio:</strong> {{ seller.bio }}
                 </div>
-
-                
-                
             </div>
-
- 
- 
- 
- 
-         </div> 
-     </div>
- </div>
- {% endblock %}
+        </div> 
+    </div>
+</div>
+{% endblock %}

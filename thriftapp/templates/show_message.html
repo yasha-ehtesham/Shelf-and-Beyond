@@ -78,9 +78,6 @@
                     </span>
                     <span>{{ conv.latest_message.timestamp|date:"F d, Y H:i" }}</span>
                 </div>
-                <div class="conversation-content">
-                    {{ conv.latest_message.message|truncatechars:100 }}
-                </div>
                 <a href="{% url 'view_conversation' conv.other_user.web_user_id %}" class="back-btn">View Conversation</a>
             </div>
         {% endfor %}
