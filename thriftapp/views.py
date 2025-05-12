@@ -1,36 +1,32 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import SignupForm1, SignupForm2, WebUserUpdateForm
-from .forms import ListingForm, ReviewForm
-from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup
-from .forms import SignupForm1, SignupForm2
-from .forms import ListingForm, ReviewForm, InboxForm
-from .models import WebUser, Role, AdminProfile, Listing, Review, Purchase, PurchaseGroup, Inbox
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.messages import get_messages
-from .models import Notification
-
-from django.contrib import messages
-from .models import WebUser, PetAdoption  # Updated to reflect the new model name
-from .forms import PetAdoptionForm  # Updated to reflect the new form
-import requests
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.http import HttpResponse
+from django.db.models import Q, Sum
+from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-
 from django.conf import settings
-
-import os
-from dotenv import load_dotenv
-
-from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Sum
-from decimal import Decimal
 from functools import wraps
+import os
+import stripe
+import requests
+from dotenv import load_dotenv
+from decimal import Decimal
+import requests
 
-#check for request.session['user_id'] 
+from .forms import SignupForm1,SignupForm2, ListingForm, ReviewForm, InboxForm, PetAdoptionForm, WebUserUpdateForm
+from .models import WebUser, Role, AdminProfile,Listing, Review, Purchase, PurchaseGroup, Inbox, Notification, PetAdoption
+
+# Load environment variables
+load_dotenv()
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
+NYT_API_KEY = os.getenv('NYT_API_KEY')
+
+# Custom decorator to check for session-based WebUser login
 def session_user_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -39,18 +35,6 @@ def session_user_required(view_func):
             return redirect('login_step')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
-
-load_dotenv()  # Load variables from .env
-import stripe
-from django.views.decorators.csrf import csrf_exempt
-
-GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
-NYT_API_KEY = os.getenv('NYT_API_KEY')
-# STRIPE_API_KEY =  os.getenv("STRIPE_SECRET_KEY") 
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")  
-
-# stripe_api_key = os.getenv("STRIPE_SECRET_KEY")  
-
 
 
 # Create your views here.
@@ -123,6 +107,18 @@ def checkout_success(request):
             )
             listing.status = 'sold'
             listing.save()
+            #seller notification
+            Notification.objects.create(recipient=listing.seller,message=f"Your book '{listing.title}' has been purchased by {web_user.firstname}.")
+            
+            # Buyer notification
+            Notification.objects.create(recipient=web_user, message=f"Your purchase of '{listing.title}' was successful.")
+            #notify all admin
+            admin_users = WebUser.objects.filter(role__role_name='admin')
+            for admin in admin_users:
+                Notification.objects.create(recipient=admin,message=f"{web_user.firstname} purchased '{listing.title}' from {listing.seller.firstname}.")
+            
+
+            
 
     # Clear cart
     request.session['cart'] = []
@@ -606,109 +602,6 @@ def manage_listings(request):
     return render(request, 'manage_listings.html', {'listings': listings})
 
 
-#------------------------------------------------------------------------------------------
-#Samin's views
-##M1 F2&3 
-@session_user_required
-def update_profile(request):
-    user_id = request.session.get('user_id')
-    user = WebUser.objects.get(pk=user_id)
-
-    if request.method == 'POST':
-        form = WebUserUpdateForm(request.POST, instance=user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('view_profile')
-    else:
-        form = WebUserUpdateForm(instance=user)
-
-    return render(request, 'update_profile.html', {'form': form})
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
-def manage_users(request):
-    users = WebUser.objects.all()
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        role_id = request.POST.get('role_id')
-        user = WebUser.objects.get(pk=user_id)
-        role = Role.objects.get(pk=role_id)
-        user.role = role
-        user.save()
-        messages.success(request, f"Updated role for {user.username}")
-        return redirect('manage_users')
-    return render(request, 'admin_manage_users.html', {'users': users, 'roles': Role.objects.all()})
-
-@session_user_required
-def view_profile(request):
-    user_id = request.session.get('user_id')
-    if not user_id:
-        messages.error(request, "You are not logged in. Please log in.")
-        return redirect('login_step')
-
-    try:
-        user = WebUser.objects.get(pk=user_id)
-    except WebUser.DoesNotExist:
-        messages.error(request, "User not found.")
-        return redirect('login_step')
-
-    return render(request, 'view_profile.html', {'user': user})
-
-# M2 F3 
-@session_user_required
-def compare_prices(request):
-    # Fetch all unique book titles that have listings
-    unique_titles = Listing.objects.values_list('title', flat=True).distinct()
-
-    books_with_listings = []
-
-    for title in unique_titles:
-        listings = Listing.objects.filter(title=title, status='available')
-
-        if listings.exists():
-            books_with_listings.append({
-                'title': title,
-                'listings': [
-                    {
-                        'seller_name': listing.seller.username, 
-                        'price': listing.price,
-                        'condition': listing.condition,
-                    }
-                    for listing in listings
-                ]
-            })
-
-    return render(request, 'compare_prices.html', {'books_with_listings': books_with_listings})
-
-@session_user_required
-def user_notifications(request):
-    user_id = request.session.get('user_id')
-    user = WebUser.objects.get(pk=user_id)
-    notifications = Notification.objects.filter(recipient=user).order_by('-timestamp')
-    return render(request, 'user_notifications.html', {'notifications': notifications})
-from django.contrib import messages
-from django.shortcuts import redirect, render
-from thriftapp.models import WebUser, Notification
-
-from django.contrib.auth.decorators import login_required
-
-
-@login_required
-def admin_notifications(request):
-    #  Only allow Django superusers
-    if not request.user.is_superuser:
-        messages.error(request, "Unauthorized access.")
-        return redirect('welcome_page')
-
-    # Try to find a matching WebUser (silent fallback if not found)
-    web_admin = WebUser.objects.filter(username=request.user.username).first()
-
-    if not web_admin:
-        notifications = []  # No notifications to show
-    else:
-        notifications = Notification.objects.filter(recipient=web_admin).order_by('-created_at')
-
-    return render(request, 'admin_notifications.html', {'notifications': notifications})
 
 #------------------------------------------------------------------------------------------
 
@@ -931,4 +824,190 @@ def stats_and_transactions_view(request):
     }
 
     return render(request, 'stats_and_trans.html', context)
+
+#------------------------------------------------------------------------------------------
+#Samin's views
+@session_user_required
+def update_profile(request):
+    user_id = request.session.get('user_id')
+    user = WebUser.objects.get(pk=user_id)
+
+    if request.method == 'POST':
+        form = WebUserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('view_profile')
+    else:
+        form = WebUserUpdateForm(instance=user)
+
+    return render(request, 'update_profile.html', {'form': form})
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def manage_users(request):
+    users = WebUser.objects.all()
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        role_id = request.POST.get('role_id')
+        user = WebUser.objects.get(pk=user_id)
+        role = Role.objects.get(pk=role_id)
+        user.role = role
+        user.save()
+        messages.success(request, f"Updated role for {user.username}")
+        return redirect('manage_users')
+    return render(request, 'admin_manage_users.html', {'users': users, 'roles': Role.objects.all()})
+
+
+
+
+@session_user_required
+def view_profile(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You are not logged in. Please log in.")
+        return redirect('login_step')
+
+    try:
+        user = WebUser.objects.get(pk=user_id)
+    except WebUser.DoesNotExist:
+        messages.error(request, "User not found.")
+        return redirect('login_step')
+
+    return render(request, 'view_profile.html', {'user': user})
+
+@session_user_required
+def compare_prices(request):
+    # Fetch all unique book titles that have listings
+    unique_titles = Listing.objects.values_list('title', flat=True).distinct()
+
+    books_with_listings = []
+
+    for title in unique_titles:
+        listings = Listing.objects.filter(title=title, status='available')
+
+        if listings.exists():
+            books_with_listings.append({
+                'title': title,
+                'listings': [
+                    {
+                        'seller_name': listing.seller.username, 
+                        'price': listing.price,
+                        'condition': listing.condition,
+                    }
+                    for listing in listings
+                ]
+            })
+
+    return render(request, 'compare_prices.html', {'books_with_listings': books_with_listings})
+
+@session_user_required
+def user_notifications(request):
+    user_id = request.session.get('user_id')
+    user = WebUser.objects.get(pk=user_id)
+
+    notifications = Notification.objects.filter(recipient=user).order_by('-timestamp')
+
+    return render(request, 'user_notifications.html', {'notifications': notifications})
+
+
+@login_required
+def admin_notifications(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Unauthorized access.")
+        return redirect('welcome_page')
+
+    web_admin = WebUser.objects.filter(username=request.user.username).first()
+
+    if not web_admin:
+        notifications = []
+    else:
+        notifications = Notification.objects.filter(recipient=web_admin).order_by('-timestamp')
+
+    return render(request, 'admin_notifications.html', {'notifications': notifications})
+
+
+
+#@login_required
+#def admin_notifications(request):
+   # user_id = request.session.get('user_id')
+    #user = get_object_or_404(WebUser, pk=user_id)
+
+    #if user.role.role_name != 'admin':
+        #messages.error(request, "Unauthorized access.")
+        #return redirect('welcome_page')
+
+   # notifications = Notification.objects.filter(recipient=user).order_by('-created_at')
+    #return render(request, 'admin_notifications.html', {'notifications': notifications})
+
+def confirm_all_purchases(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('view_cart')
+
+    listings = Listing.objects.filter(listing_id__in=cart)
+
+    # Create a new group for this checkout session
+    group = PurchaseGroup.objects.create(buyer=web_user)
+
+    for listing in listings:
+        # Avoid double-purchasing
+        if not Purchase.objects.filter(buyer=web_user, listing=listing).exists():
+            Purchase.objects.create(
+                buyer=web_user,
+                listing=listing,
+                seller=listing.seller,
+                purchase_group=group
+            )
+            listing.status = 'sold'  # 👈 mark as sold
+            listing.save()
+            # Notify the seller
+            Notification.objects.create(
+                recipient=listing.seller,
+                message=f"Your book '{listing.title}' has been purchased by {web_user.firstname}."
+            )
+
+            # Notify the buyer
+            Notification.objects.create(
+                recipient=web_user,
+                message=f"Your purchase of '{listing.title}' was successful.")
+            admin_users = WebUser.objects.filter(role__role_name='admin')
+            for admin in admin_users:
+                Notification.objects.create(
+                    recipient=admin,
+                    message=f"{web_user.firstname} purchased '{listing.title}' from {listing.seller.firstname}.")
+           
+    # Clear cart after successful grouped purchase
+    request.session['cart'] = []
+
+    return redirect('view_purchase_history')
+
+
+
+def view_total_bill(request):
+    web_user_id = request.session.get('user_id')
+    if not web_user_id:
+        return redirect('login_step')
+
+    web_user = get_object_or_404(WebUser, pk=web_user_id)
+
+    cart = request.session.get('cart', [])
+    # Only consider purchases that are:
+    # - in the cart
+    # - confirmed (exist in Purchase model for this user)
+    purchases = Purchase.objects.filter(
+        buyer=web_user,
+        listing__listing_id__in=cart
+    )
+
+    total_bill = sum(purchase.listing.price for purchase in purchases)
+
+    return render(request, "view_total_bill.html", {
+        'total_bill': total_bill
+    })
+
 

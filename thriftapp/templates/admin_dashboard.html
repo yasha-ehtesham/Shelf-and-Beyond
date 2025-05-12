@@ -15,18 +15,20 @@
     </ul>
     <br>
     <br>
-    <div class="list-buttons mt-4">
-        <!--samin added-->
-        <a href="{% url 'manage_users' %}"><button class="btn btn-dark">Manage Users</button></a>
-        <a href="{% url 'admin_notifications' %}"><button class="btn btn-danger">System Notifications</button></a>
-        <a href="{% url 'show_listings' %}"><button class="btn btn-secondary">View All Listings</button></a>
-    </div>
-        <form action="{% url 'view_all_webusers' %}" method="get">
-            <button type="submit" class="all_webusers">View all Users</button>
-        </form>
-        <!-- a get request is submitted to go to this page -->
-    </div>
 
+    <!-- ✅ All action buttons in the same styled block -->
+    <div class="list-buttons mt-4">
+        <a href="{% url 'admin_notifications' %}">
+            <button class="create_listing">System Notifications</button>
+        </a>
+
+        <a href="{% url 'show_listings' %}">
+            <button class="create_listing">View All Listings</button>
+        </a>
+
+        <a href="{% url 'view_all_webusers' %}">
+            <button class="create_listing">View All Users</button>
+        </a>
+    </div>
 </div>
 {% endblock %}
- 

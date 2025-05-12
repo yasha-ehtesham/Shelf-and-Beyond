@@ -1,0 +1,146 @@
+{% extends "base2.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Adoption Listing</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    
+<body>
+<!-- Page Layout -->
+<div class="d-flex">
+
+    <!-- Side Navigation -->
+    <div class="side-navigation">
+        <a href="/show_listings/" class="btn btn-dark">Browse All</a>
+        <a href="/notifications" class="btn btn-dark">Notifications</a>
+        <a href="/message/show/" class="btn btn-dark">Inbox</a>
+        <a href="/buying" class="btn btn-dark">Buying</a>
+        <a href="/selling" class="btn btn-dark">Selling</a>
+        <a href="/listing/create" class="btn btn-dark">Create Listing</a>
+        <a href="/manage_listings/" class="btn btn-dark">Manage Listings</a>
+    </div>
+
+
+    <div class="main-content">
+
+        <div class="sidebar-content">
+            <h4>📚 Pet Adoption</h4>
+            <form method="POST" enctype="multipart/form-data" id="adoptionForm" action="{% url 'pet_adoption' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image</label>
+                    {{ form.image }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+                    {{ form.title }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.age.id_for_label }}" class="form-label">Age</label>
+                    {{ form.age }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.food_habit.id_for_label }}" class="form-label">Food Habit</label>
+                    {{ form.food_habit }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.potty_trained.id_for_label }}" class="form-label">Potty Trained</label>
+                    {{ form.potty_trained }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.breed.id_for_label }}" class="form-label">Breed</label>
+                    {{ form.breed }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+                    {{ form.gender }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                    {{ form.description }}
+                </div>
+
+                <button type="submit" class="btn btn-dark mt-3">Add Adoption Listing</button>
+            </form>
+        </div>
+
+
+        <div class="preview-content">
+            <div class="preview-box text-center">
+                <h4>Your listing preview</h4>
+                <p class="text-muted">As you create your adoption listing, preview how it will appear to others</p>
+                <div id="preview-content">
+                    <div class="img-preview-container" id="img-preview">
+                        <span>No image uploaded yet.</span>
+                    </div>
+                    <h5 id="preview-title"></h5>
+                    <p id="preview-description"></p>
+                    <strong id="preview-age"></strong><br>
+                    <em id="preview-breed"></em>
+                    <p><strong>Food Habit: </strong><span id="preview-food-habit"></span></p>
+                    <p><strong>Potty Trained: </strong><span id="preview-potty-train"></span></p>
+                    <p><strong>Gender: </strong><span id="preview-gender"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const titleField = document.getElementById('id_title');
+        const ageField = document.getElementById('id_age');
+        const foodHabitField = document.getElementById('id_food_habit');
+        const pottyTrainedField = document.getElementById('id_potty_trained');
+        const breedField = document.getElementById('id_breed');
+        const genderField = document.getElementById('id_gender');
+        const descriptionField = document.getElementById('id_description');
+        const imgPreview = document.getElementById('img-preview');
+    
+        function updatePreview() {
+            document.getElementById('preview-title').textContent = titleField.value;
+            document.getElementById('preview-description').textContent = descriptionField.value;
+            document.getElementById('preview-age').textContent = ageField.value + ' years';
+            document.getElementById('preview-breed').textContent = breedField.value;
+            document.getElementById('preview-food-habit').textContent = foodHabitField.value;
+            document.getElementById('preview-potty-train').textContent = pottyTrainedField.options[pottyTrainedField.selectedIndex].text;
+            document.getElementById('preview-gender').textContent = genderField.options[genderField.selectedIndex].text;
+        }
+    
+        function previewImage() {
+            const file = document.getElementById('id_image').files[0];
+            const reader = new FileReader();
+    
+            reader.onloadend = function () {
+                imgPreview.innerHTML = `<img src="${reader.result}" alt="Image preview" />`;
+            }
+    
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                imgPreview.innerHTML = `<span>No image uploaded yet.</span>`;
+            }
+        }
+    
+
+        titleField.addEventListener('input', updatePreview);
+        ageField.addEventListener('input', updatePreview);
+        foodHabitField.addEventListener('input', updatePreview);
+        pottyTrainedField.addEventListener('change', updatePreview);
+        breedField.addEventListener('input', updatePreview);
+        genderField.addEventListener('change', updatePreview);
+        descriptionField.addEventListener('input', updatePreview);
+        document.getElementById('id_image').addEventListener('change', previewImage); 
+    </script>
+
+</body>
+</html>
+{% endblock %}

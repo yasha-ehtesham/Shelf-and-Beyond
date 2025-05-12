@@ -1,3 +1,4 @@
+
 {% extends 'base2.html' %}
 {% load static %}
 
@@ -44,12 +45,12 @@
             
                 <br>
 
-                <form action="{% url 'send_message' %}" method="get">
+                <form action="{% url 'send_message' listing.seller.web_user_id %}" method="get">
                     <button type="submit" class="button">Send Message</button>
                 </form>
                 <br>
                  
-                {% if listing.status != 'sold' %}
+                {% if listing.status != 'sold' and listing.seller.web_user_id != request.session.user_id %}
                 <form action="{% url 'add_to_cart' %}" method="get">
                     {% if request.session.user_id %}
                     <input type="hidden" name="cart_item" value="{{ listing.listing_id }}">

@@ -1,0 +1,8 @@
+{% extends "base2.html" %}
+{% block content %}
+<div class="centered-content">
+    <h2>Success</h2>
+    <p>{{ message }}</p>
+    <p><a href="{% url 'view_purchase_history' %}">View Purchase History</a></p>
+</div>
+{% endblock %}

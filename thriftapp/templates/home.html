@@ -8,21 +8,42 @@
 
     {% if request.session.user_id %} 
         <br>
-        <div class="list-buttons">
-           
-            <a href="{% url 'show_listings' %}"><button class="btn btn-secondary">BROWSE BOOKS</button></a>
-            <a href="{% url 'view_purchase_history' %}"><button class="btn btn-success">PURCHASE HISTORY</button></a>
 
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <form action="{% url 'create_listing' %}" method="get">
-                    <button type="submit" class="btn btn-outline-primary">CREATE LISTING</button>
-                </form>
-                <a href="{% url 'compare_prices' %}">
-                    <button class="btn btn-outline-secondary">COMPARE PRICES</button>
-                </a>
-            </div>
+        <div class="list-buttons" style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+
+            <a href="{% url 'show_listings' %}">
+                <button class="btn btn-secondary">BROWSE BOOKS</button>
+            </a>
+
+            <a href="{% url 'view_purchase_history' %}">
+                <button class="btn btn-success">PURCHASE HISTORY</button>
+            </a>
+
+            <form action="{% url 'create_listing' %}" method="get">
+                <button type="submit" class="btn btn-outline-primary">CREATE LISTING</button>
+            </form>
+
+            <a href="{% url 'compare_prices' %}">
+                <button class="btn btn-outline-secondary">COMPARE PRICES</button>
+            </a>
+
+            <form action="{% url 'interaction_history' %}" method="get">
+                <button type="submit" class="btn btn-outline-info">VIEW ALL HISTORY</button>
+            </form>
+
+            <form action="{% url 'stats_and_transactions' %}" method="get">
+                <button type="submit" class="btn btn-outline-warning">VIEW ALL STATS AND TRANSACTIONS</button>
+            </form>
+
+            <form action="{% url 'pet_adoption' %}" method="get">
+                <button type="submit" class="btn btn-outline-success">CREATE ADOPTION LISTING</button>
+            </form>
         </div>
+       
+
         <br>
+    {% else %}
+        <p>Please log in to view your dashboard.</p>
     {% endif %}
 </div>
 {% endblock %}

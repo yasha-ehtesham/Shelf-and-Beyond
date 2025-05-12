@@ -1,0 +1,14 @@
+{% extends "base2.html" %}
+{% block content %}
+<div class="centered-content">
+    <h1>{{ listing.title }}</h1>
+    <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="listing-image">
+    <p><strong>Description:</strong> {{ listing.description }}</p>
+    <p><strong>Age:</strong> {{ listing.age }} years</p>
+    <p><strong>Breed:</strong> {{ listing.breed }}</p>
+    <p><strong>Food Habit:</strong> {{ listing.food_habit }}</p>
+    <p><strong>Potty Trained:</strong> {{ listing.potty_trained|yesno:"Yes,No" }}</p>
+    <p><strong>Gender:</strong> {{ listing.get_gender_display }}</p>
+    <p><strong>Status:</strong> {{ listing.get_status_display }}</p>
+</div>
+{% endblock %}

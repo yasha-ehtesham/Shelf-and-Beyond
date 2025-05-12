@@ -1,7 +1,21 @@
+
 {% extends "base2.html" %}
 
 
 {% block content %}
+<div class = "centered-content">
+    <h2>Item added successfully </h2>
+    <div class="list-buttons">
+        <form action="{% url 'show_listings' %}" method="get">
+            <button type="submit" class="show_listings">BACK TO LISTINGS</button>
+        </form>
+        <br>
+        <form action="{% url 'view_cart' %}" method="get">
+            <button type="submit" class="view_cart">VIEW CART</button>
+        </form>
+        
 
-<h2>Item added successfully </h2>
+    </div>
+
+</div>
 {% endblock %}

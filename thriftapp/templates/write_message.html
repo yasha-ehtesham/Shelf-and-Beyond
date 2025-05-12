@@ -1,0 +1,25 @@
+<!-- write_message.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Write Message to Seller</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<div class="centered-content">
+    <h1>Send Message to {{ seller.first_name }} {{ seller.last_name }}</h1>
+
+    <form method="POST" action="{% url 'send_message' seller.id %}">
+        {% csrf_token %}
+        <textarea name="message" placeholder="Your message..." rows="6" required></textarea><br><br>
+        <button type="submit">Send Message</button>
+    </form>
+</div>
+
+</body>
+</html>
+
+

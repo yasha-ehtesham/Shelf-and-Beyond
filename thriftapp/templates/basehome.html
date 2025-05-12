@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
@@ -14,8 +15,6 @@
             <div class="search-container">
                 <input type="text" placeholder="Search by book name or author name">
                 <button class="search-btn">🔍</button>
-                <!-- <button class="search-btn">&#128269</button> -->
-
                 <a href="{% url 'view_cart' %}">
                     <button type="button" class="cart-btn">🛒</button>
                 </a>
@@ -29,29 +28,23 @@
                     <a href="{% url 'signup_step1' %}"><button class="signup">SIGN UP</button></a>
                 {% endif %}
             </div>
-
-
         </div>
+
         <nav class="nav-links">
             <a href="{% if request.session.user_id %}{% url 'welcome_page' %}{% elif request.user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'home_page' %}{% endif %}">Home</a>
-
             <div class="dropdown">
                 <a href="#" class="category-link">Category ▾</a>
-                <!-- <a href="#">Category ▾</a> -->
             </div>
             <a href="#">Genre</a>
             <a href="#">Authors</a>
             <a href="#">Bestsellers</a>
             <a href="{% url 'show_listings' %}">All Listings</a>
             {% if request.user.is_superuser %}
-            <a href="{% url 'admin_notifications' %}">System Alerts</a>
-            <a href="{% url 'manage_users' %}">Manage Users</a>
-            
+
             {% elif request.session.user_id %}
                 <a href="{% url 'notifications' %}">Notifications</a>
                 <a href="{% url 'view_profile' %}">Profile</a>
             {% endif %}
-
         </nav>
     </header>
 
