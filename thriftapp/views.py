@@ -951,6 +951,8 @@ def adoption_stats_view(request):
     return render(request, 'adoption_stats.html', context)
 
 
+
+
 def search_results(request):
     query = request.GET.get('q', '')
     listings = []
